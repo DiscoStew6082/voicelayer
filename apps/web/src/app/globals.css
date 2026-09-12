@@ -56,7 +56,7 @@ p {
 .ck-workspace {
   max-width: 1160px;
   margin: auto;
-  padding: 48px 32px;
+  padding: 48px 32px 190px;
 }
 .ck-workspace-header {
   display: flex;
@@ -698,27 +698,45 @@ p {
 .ck-voice-control {
   position: fixed;
   z-index: 50;
-  right: 20px;
-  bottom: 20px;
-  width: min(360px, calc(100vw - 32px));
+  left: 50%;
+  bottom: 16px;
+  width: min(1160px, calc(100vw - 32px));
+  transform: translateX(-50%);
   color: var(--text);
+  pointer-events: none;
 }
-.ck-voice-bar,
 .ck-voice-approval,
 .ck-voice-result,
-.ck-voice-transcript,
 .ck-voice-error {
   background: color-mix(in srgb, var(--surface-raised) 92%, transparent);
   border: 1px solid var(--border);
   box-shadow: 0 16px 48px rgb(0 0 0 / 42%);
   backdrop-filter: blur(18px) saturate(135%);
 }
+.ck-voice-stack {
+  width: min(400px, 100%);
+  margin: 0 0 8px auto;
+  pointer-events: auto;
+}
+.ck-voice-dock {
+  display: grid;
+  grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
+  min-height: 116px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--surface-raised) 94%, transparent);
+  box-shadow: 0 18px 56px rgb(0 0 0 / 50%);
+  backdrop-filter: blur(18px) saturate(135%);
+  pointer-events: auto;
+}
 .ck-voice-bar {
   display: flex;
   align-items: center;
   gap: 12px;
-  border-radius: 999px;
-  padding: 8px 14px 8px 8px;
+  padding: 18px;
+  border-right: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 72%, transparent);
 }
 .ck-voice-bar strong,
 .ck-voice-bar span {
@@ -755,9 +773,8 @@ p {
 }
 .ck-voice-approval,
 .ck-voice-result,
-.ck-voice-error,
-.ck-voice-transcript {
-  margin: 8px 8px 0;
+.ck-voice-error {
+  margin: 8px 0 0;
   border-radius: 12px;
   padding: 14px;
 }
@@ -801,15 +818,55 @@ p {
   font-size: 12px;
   overflow-wrap: anywhere;
 }
-.ck-voice-transcript summary {
-  font-size: 12px;
+.ck-voice-transcript {
+  min-width: 0;
+  padding: 12px 16px 10px;
 }
-.ck-voice-transcript pre {
-  max-height: 180px;
+.ck-voice-transcript > header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 6px;
+}
+.ck-voice-transcript > header strong {
+  color: var(--accent);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.ck-voice-transcript > header span {
+  color: var(--muted);
+  font-size: 10px;
+}
+.ck-voice-transcript-log {
+  height: 70px;
   overflow: auto;
-  margin: 10px 0 0;
-  white-space: pre-wrap;
-  font: 11px/1.6 "Spline Sans Mono", monospace;
+  padding-right: 8px;
+  scroll-behavior: smooth;
+}
+.ck-voice-transcript-log p {
+  display: grid;
+  grid-template-columns: 50px minmax(0, 1fr);
+  gap: 10px;
+  margin: 0 0 4px;
+  font: 11px/1.45 "Spline Sans Mono", monospace;
+}
+.ck-voice-transcript-log p strong {
+  color: var(--accent);
+  font-size: 10px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+.ck-voice-transcript-log p[data-speaker="Action"] strong {
+  color: #aeb8ff;
+}
+.ck-voice-transcript-log p span {
+  overflow-wrap: anywhere;
+}
+.ck-voice-transcript-empty {
+  display: block !important;
+  color: var(--muted);
 }
 @media (prefers-reduced-motion: reduce) {
   .ck-voice-button--active {
@@ -821,10 +878,20 @@ p {
     outline-offset: 6px;
   }
 }
-@media (max-width: 480px) {
-  .ck-voice-control {
-    right: 16px;
-    bottom: 16px;
+@media (max-width: 640px) {
+  .ck-workspace {
+    padding-bottom: 260px;
+  }
+  .ck-voice-dock {
+    grid-template-columns: 1fr;
+  }
+  .ck-voice-bar {
+    padding: 10px 14px;
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .ck-voice-transcript-log {
+    height: 72px;
   }
 }
 

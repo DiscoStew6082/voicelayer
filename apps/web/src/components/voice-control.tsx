@@ -22,6 +22,12 @@ type VoiceStatus =
   | "confirming"
   | "error";
 
+type TranscriptEntry = {
+  id: string;
+  speaker: "You" | "Agent" | "Action";
+  text: string;
+};
+
 type ApprovalItem = Parameters<RealtimeSession["approve"]>[0];
 
 type PendingApproval = {
@@ -59,7 +65,7 @@ function latestCompletedUserMessage(history: RealtimeItem[]) {
 export function VoiceControl({ actions }: { actions: AppActions }) {
   const [status, setStatus] = useState<VoiceStatus>("idle");
   const [error, setError] = useState("");
-  const [transcript, setTranscript] = useState<string[]>([]);
+  const [transcript, setTranscript] = useState<TranscriptEntry[]>([]);
   const [lastAction, setLastAction] = useState("");
   const [pendingApproval, setPendingApproval] =
     useState<PendingApproval | null>(null);
@@ -67,7 +73,13 @@ export function VoiceControl({ actions }: { actions: AppActions }) {
   const sessionRef = useRef<RealtimeSession | null>(null);
   const pendingApprovalRef = useRef<PendingApproval | null>(null);
   const audioPlayingRef = useRef(false);
+  const transcriptLogRef = useRef<HTMLDivElement | null>(null);
   actionsRef.current = actions;
+
+  useEffect(() => {
+    const log = transcriptLogRef.current;
+    if (log) log.scrollTop = log.scrollHeight;
+  }, [transcript]);
 
   const settleApproval = useCallback(
     async (decision: "approve" | "reject") => {
@@ -232,6 +244,21 @@ export function VoiceControl({ actions }: { actions: AppActions }) {
         // can briefly confirm the completed action. `required` also applies to
         // that follow-up and can trap the session in another tool call.
         toolChoice: "auto",
+        audio: {
+          input: {
+            // The hackathon demo normally runs through a laptop microphone in
+            // a shared room. Filter the audio before both VAD and the model,
+            // then require a stronger nearby signal before starting a turn so
+            // surrounding conversations are less likely to become commands.
+            noiseReduction: { type: "far_field" },
+            turnDetection: {
+              type: "server_vad",
+              threshold: 0.72,
+              prefixPaddingMs: 300,
+              silenceDurationMs: 650,
+            },
+          },
+        },
       },
     });
     sessionRef.current?.close();
@@ -244,13 +271,23 @@ export function VoiceControl({ actions }: { actions: AppActions }) {
           .map((item) => {
             if (item.type === "function_call") {
               const result = item.output?.trim();
-              return `tool  ${item.name}${result ? ` — ${result}` : ""}`;
+              return {
+                id: item.itemId,
+                speaker: "Action" as const,
+                text: `${item.name.replaceAll("_", " ")}${result ? ` — ${result}` : ""}`,
+              };
             }
-            if (item.type !== "message" || item.role === "system") return "";
+            if (item.type !== "message" || item.role === "system") return null;
             const text = messageText(item);
-            return text ? `${item.role === "user" ? "you" : "agent"}  ${text}` : "";
+            return text
+              ? {
+                  id: item.itemId,
+                  speaker: item.role === "user" ? ("You" as const) : ("Agent" as const),
+                  text,
+                }
+              : null;
           })
-          .filter(Boolean),
+          .filter((entry): entry is TranscriptEntry => entry !== null),
       );
 
       const pending = pendingApprovalRef.current;
@@ -384,76 +421,100 @@ export function VoiceControl({ actions }: { actions: AppActions }) {
 
   return (
     <aside className="ck-voice-control" aria-label="Voice control">
-      <div className="ck-voice-bar">
-        <button
-          type="button"
-          className={`ck-voice-button${active ? " ck-voice-button--active" : ""}`}
-          onClick={active ? disconnect : connect}
-          disabled={status === "connecting"}
-          aria-pressed={active}
-          aria-label={active ? "Turn off voice control" : "Turn on voice control"}
-        >
-          <span aria-hidden="true">{active ? "■" : "●"}</span>
-        </button>
-        <div>
-          <strong>{statusLabel}</strong>
-          <span aria-live="polite">
-            {status === "confirming"
-              ? "Say confirm or cancel"
-              : active
-                ? "Control this page by voice"
-                : "Select to start listening"}
-          </span>
-        </div>
+      <div className="ck-voice-stack">
+        {lastAction && (
+          <p className="ck-voice-result" role="status">
+            <span aria-hidden="true">✓</span>
+            <span>
+              <strong>Voice action completed</strong>
+              {lastAction}
+            </span>
+          </p>
+        )}
+
+        {pendingApproval && (
+          <section className="ck-voice-approval" aria-label="Confirm submission">
+            <strong>Submit this follow-up?</strong>
+            <span>{pendingApproval.draft.title}</span>
+            <p>{pendingApproval.draft.details}</p>
+            <p>Say “confirm” or “cancel”, or use these buttons.</p>
+            <div className="ck-approval-actions">
+              <button
+                type="button"
+                className="ck-btn ck-btn--primary"
+                onClick={() => void settleApproval("approve")}
+              >
+                Approve
+              </button>
+              <button
+                type="button"
+                className="ck-btn"
+                onClick={() => void settleApproval("reject")}
+              >
+                Cancel
+              </button>
+            </div>
+          </section>
+        )}
+
+        {error && (
+          <p className="ck-voice-error" role="alert">
+            {error}
+          </p>
+        )}
       </div>
 
-      {lastAction && (
-        <p className="ck-voice-result" role="status">
-          <span aria-hidden="true">✓</span>
-          <span>
-            <strong>Voice action completed</strong>
-            {lastAction}
-          </span>
-        </p>
-      )}
+      <div className="ck-voice-dock">
+        <div className="ck-voice-bar">
+          <button
+            type="button"
+            className={`ck-voice-button${active ? " ck-voice-button--active" : ""}`}
+            onClick={active ? disconnect : connect}
+            disabled={status === "connecting"}
+            aria-pressed={active}
+            aria-label={active ? "Turn off voice control" : "Turn on voice control"}
+          >
+            <span aria-hidden="true">{active ? "■" : "●"}</span>
+          </button>
+          <div>
+            <strong>{statusLabel}</strong>
+            <span aria-live="polite">
+              {status === "confirming"
+                ? "Say confirm or cancel"
+                : active
+                  ? "Control this page by voice"
+                  : "Select to start listening"}
+            </span>
+          </div>
+        </div>
 
-      {pendingApproval && (
-        <section className="ck-voice-approval" aria-label="Confirm submission">
-          <strong>Submit this follow-up?</strong>
-          <span>{pendingApproval.draft.title}</span>
-          <p>{pendingApproval.draft.details}</p>
-          <p>Say “confirm” or “cancel”, or use these buttons.</p>
-          <div className="ck-approval-actions">
-            <button
-              type="button"
-              className="ck-btn ck-btn--primary"
-              onClick={() => void settleApproval("approve")}
-            >
-              Approve
-            </button>
-            <button
-              type="button"
-              className="ck-btn"
-              onClick={() => void settleApproval("reject")}
-            >
-              Cancel
-            </button>
+        <section className="ck-voice-transcript" aria-label="Live voice transcript">
+          <header>
+            <strong>Live transcript</strong>
+            <span>{transcript.length} {transcript.length === 1 ? "entry" : "entries"}</span>
+          </header>
+          <div
+            ref={transcriptLogRef}
+            className="ck-voice-transcript-log"
+            role="log"
+            aria-live="polite"
+            aria-relevant="additions text"
+          >
+            {transcript.length ? (
+              transcript.map((entry) => (
+                <p key={entry.id} data-speaker={entry.speaker}>
+                  <strong>{entry.speaker}</strong>
+                  <span>{entry.text}</span>
+                </p>
+              ))
+            ) : (
+              <p className="ck-voice-transcript-empty">
+                Spoken commands and voice actions will appear here as they happen.
+              </p>
+            )}
           </div>
         </section>
-      )}
-
-      {error && (
-        <p className="ck-voice-error" role="alert">
-          {error}
-        </p>
-      )}
-
-      {transcript.length > 0 && (
-        <details className="ck-voice-transcript">
-          <summary>Transcript ({transcript.length})</summary>
-          <pre>{transcript.join("\n")}</pre>
-        </details>
-      )}
+      </div>
     </aside>
   );
 }
