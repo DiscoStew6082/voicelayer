@@ -1,74 +1,119 @@
-# Submission checklist
+# VoiceLayer submission package
 
-Choose your city on the [global event page](https://aitinkerers.org/hackathons/global/agents-everywhere). Use that city's participant portal for the submission deadline and published judging criteria, and its handbook for eligibility and required deliverables. See [hackathon-rules.md](hackathon-rules.md) for the agent-readable summary.
+Atlanta portal: <https://atlanta.aitinkerers.org/hackathons/h_pS99rSfunCc>
 
-## Build eligibility
+Submission deadline: **September 12, 2026 at 4:30 PM EDT**. Aim to submit by
+4:00 PM.
 
-- [ ] Our submitted project is a net-new build created during the official hackathon period
-- [ ] Its core functionality was built during the event; we are not resubmitting or extending a pre-existing project and entering it as new
-- [ ] We identify inherited templates, libraries, prompts, components, and starter code separately from our event work
+## Portal copy
 
-**What we inherited**
-<!-- Include this starter kit and any reused examples. -->
+### Project title
 
-**What we built during the hackathon**
-<!-- Describe the new core interaction and point to its implementation. Running the supplied incident demo alone does not establish a new project. -->
+VoiceLayer
 
-## Title and description
+### Short description
 
-**What you built**
-<!-- Explain the complete interaction your demo shows. -->
+VoiceLayer makes voice a first-class accessibility input for existing web
+applications. An OpenAI Realtime agent receives live CopilotKit page context
+and invokes semantic application actions while the normal interface remains
+visible. A user who has difficulty operating a keyboard, mouse, or touchscreen
+can navigate records, scroll, fill forms, and submit work with explicit
+confirmation and a visible transcript.
 
-**Who it is for**
-<!-- Name a person in a concrete situation. -->
+### What makes it useful
 
-**Why the context matters**
-<!-- What did the agent know or do because it lived in this surface? -->
+Conventional voice assistants move the user into a separate conversation and
+lose the interface they were working in. VoiceLayer operates the application
+the user is already looking at. It understands the selected record, ordered
+visible items, focused field, form values, and scroll state, then calls
+application-owned actions instead of guessing pointer coordinates.
 
-**Sponsor technologies used**
-<!-- Name the tools you actually used and the visible contribution of each. -->
+### Sponsor technologies used
 
-## Evidence for the judging criteria
+- **OpenAI:** RealtimeAgent and WebRTC provide low-latency spoken interaction,
+  tool calling, and the approval lifecycle.
+- **CopilotKit:** `useAgentContext` exposes live application state and
+  `useFrontendTool` exposes the same semantic action layer to the normal web
+  agent.
 
-Judges score each of the four official criteria from 1–5. This checklist helps you gather evidence; it does not guarantee a score. A working starter is a foundation for your own project.
+Do not claim Ambiguous AI in the submission: this focused voice prototype keeps
+submitted demo follow-ups in browser memory.
 
-| Official criterion | Show in your project and demo |
-|---|---|
-| Core Requirements & Functionality | Run one complete workflow in the intended environment, from user request through tools to a verified result. Repeat it with live integrations; offline tests alone do not prove the deployed flow. |
-| Innovation & Theme Alignment | Show the surrounding context before the prompt and explain the original interaction it enables. Compare with the context removed: what value would a standalone chatbox lose? |
-| Technical Execution & Integration | Show how tools, data, and the environment connect. Demonstrate a relevant failure or cancellation path and explain recovery, state persistence, and integration limits. |
-| Usefulness & Agentic Experience | Identify the user and problem, show a meaningful action in the surface, and demonstrate clear feedback and appropriate user control. Explain what work the agent saves. |
+## Eligibility disclosure
 
-- [ ] We can point to visible evidence for every criterion
-- [ ] We distinguish live services, sample data, session-only state, and standalone recipes
-- [ ] Sponsor technologies contribute to the workflow; their count is not a judging criterion
+### Inherited from the starter kit
 
-## Public repository
+- CopilotKit Agents Everywhere starter repository and incident sample data
+- Existing CopilotKit web runtime, chat UI, and page-agent integration
+- Existing OpenAI RealtimeAgent/WebRTC voice route and session scaffolding
 
-- [ ] A new participant can run the quickstart from a clean clone
-- [ ] The README lists the credentials and separate processes required
-- [ ] `npm run verify` passes; optional recipe checks pass if used
-- [ ] `.env`, tokens, generated traces with sensitive data, and account secrets are excluded
-- [ ] Sample data, session-only state, and unimplemented integrations are clearly labeled
+### Built during the hackathon
 
-## Two-minute demo video
+- Floating in-app voice control that leaves the application visible
+- Shared semantic `AppActions` layer used by voice and CopilotKit frontend tools
+- Live context bridge for selection, visible ordering, focus, forms, and scroll
+- Realtime tools for contextual selection, scrolling, form filling, and back
+- Explicit approval gate for submission plus cancel behavior
+- Compact status, action feedback, transcript, and guided accessibility demo
+- Dark, accessibility-oriented presentation and voice-session lifecycle fixes
 
-- [ ] Show the surface and existing context before the prompt
-- [ ] Demonstrate one complete interaction
-- [ ] Show a visible result: an actual record, local state change, or research source links
-- [ ] If showing an approval, distinguish the decision from execution and demonstrate the resulting behavior
-- [ ] State which sponsor technologies made the interaction possible
-- [ ] Keep the video within the event's limit and check audio
+## Two-minute video script
 
-See [demo prompts](dev-docs/demo-prompts.md) for a reproducible incident workflow.
+**0:00–0:15 — Problem**
 
-## Social post and final submission
+“Voice interfaces usually replace the screen. VoiceLayer keeps the application
+visible and makes speech another accessible input method.” Show the workspace
+and floating microphone.
 
-- [ ] Follow the organizer's posting and sponsor-tagging instructions
-- [ ] Link the public repository and video
-- [ ] Credit the sponsors you used and applicable local partners
-- [ ] Check the live integration once more before recording or submitting
-- [ ] Inspect the repository, video and screenshots for secrets
+**0:15–0:35 — Contextual navigation**
 
-Prepare the post and submission for a human to publish; running the starter kit
-does not publish either automatically.
+Start voice and say, “Open the second incident.” Point out that the incident
+selection changes in the existing interface. Say, “Scroll down.”
+
+**0:35–1:10 — Semantic form control**
+
+Say, “Fill the title with Check notification backlog,” followed by, “Fill the
+details with Confirm the queue is drained by 10:30.” Show the visible fields
+update and the mission progress turn green.
+
+**1:10–1:35 — Human control**
+
+Say, “Send it.” Show that nothing is submitted yet. Say, “Confirm.” Show the
+new follow-up in “Submitted in this session.” Mention that this is fictional,
+browser-session data.
+
+**1:35–1:55 — Technical proof**
+
+Expand the transcript. Say: “OpenAI Realtime handles speech and tool calling;
+CopilotKit supplies live page context and frontend-tool integration. Both use
+application-owned semantic actions, not mouse coordinates.”
+
+**1:55–2:00 — Close**
+
+“Keep the interface visible. Speak intent. Operate the app.”
+
+## Social post draft
+
+> We built VoiceLayer at Agents, Everywhere Atlanta: an accessibility-focused
+> voice control layer that keeps the web app visible while an OpenAI Realtime
+> agent operates it through semantic CopilotKit actions. Users can navigate,
+> scroll, fill forms, and submit with explicit confirmation—no simulated mouse
+> coordinates. <https://github.com/DiscoStew6082/voicelayer> [DEMO_VIDEO_URL]
+>
+> Built with OpenAI and CopilotKit. [ADD THE EXACT EVENT AND SPONSOR HANDLES
+> REQUIRED BY THE ATLANTA ORGANIZERS]
+
+## Final checklist
+
+- [x] Project-specific title and description prepared
+- [x] Inherited starter work and hackathon work identified separately
+- [x] Complete voice workflow and cancellation/confirmation behavior implemented
+- [x] Sample data and browser-session persistence clearly labeled
+- [x] Run final verification and production build (3 typechecks, 34 tests, build)
+- [x] Create a participant-owned public GitHub repository
+- [ ] Confirm `.env` and secrets are absent from the public repository
+- [ ] Record and upload a video no longer than two minutes
+- [ ] Add repository and video URLs to the social post
+- [ ] Confirm the exact Atlanta event/sponsor social handles with organizers
+- [ ] Publish the social post
+- [ ] Sign in and submit through the Atlanta portal before 4:30 PM EDT

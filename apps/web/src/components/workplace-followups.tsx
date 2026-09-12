@@ -1,17 +1,22 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import type { FollowupDraft, FollowupField } from "@/lib/app-actions";
 import type { WorkplaceControls } from "@/lib/use-workplace";
 
 export function WorkplaceFollowups({
   incidentId,
   workplace,
+  draft,
+  setDraftField,
+  onFocusField,
 }: {
   incidentId: string;
   workplace: WorkplaceControls;
+  draft: FollowupDraft;
+  setDraftField: (field: FollowupField, value: string) => void;
+  onFocusField: (field: FollowupField) => void;
 }) {
-  const [title, setTitle] = useState("");
-  const [details, setDetails] = useState("");
   const [error, setError] = useState("");
   const [preparing, setPreparing] = useState(false);
   const { status, proposal, busy, notice } = workplace;
@@ -22,9 +27,9 @@ export function WorkplaceFollowups({
     setPreparing(true);
     setError("");
     try {
-      await workplace.propose({ incidentId, title, details });
-      setTitle("");
-      setDetails("");
+      await workplace.propose({ incidentId, ...draft });
+      setDraftField("title", "");
+      setDraftField("details", "");
     } catch (error) {
       setError(
         error instanceof Error ? error.message : "Unable to prepare proposal.",
@@ -51,10 +56,10 @@ export function WorkplaceFollowups({
     <section className="ck-followups" aria-labelledby="followup-title">
       <header className="ck-followups-header">
         <div>
-          <h2 id="followup-title">Follow-ups</h2>
+          <h2 id="followup-title">Draft a follow-up</h2>
           <p className="ck-local-note">
-            Proposals are saved only after page approval. Refresh reads the
-            provider again.
+            Type here or ask the voice agent to fill these fields. Nothing is
+            saved until you approve the exact draft.
           </p>
         </div>
         <span className="ck-tag">Ambiguous</span>
@@ -127,8 +132,9 @@ export function WorkplaceFollowups({
         </label>
         <input
           id="task-title"
-          value={title}
-          onChange={(event) => setTitle(event.target.value)}
+          value={draft.title}
+          onChange={(event) => setDraftField("title", event.target.value)}
+          onFocus={() => onFocusField("title")}
           maxLength={200}
           placeholder="Write a follow-up title…"
           required
@@ -138,8 +144,9 @@ export function WorkplaceFollowups({
         </label>
         <textarea
           id="task-details"
-          value={details}
-          onChange={(event) => setDetails(event.target.value)}
+          value={draft.details}
+          onChange={(event) => setDraftField("details", event.target.value)}
+          onFocus={() => onFocusField("details")}
           maxLength={4000}
           placeholder="What needs checking, and why?"
           required

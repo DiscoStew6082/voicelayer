@@ -109,6 +109,39 @@ export function useWorkplace(incidentId: string) {
       setBusy(false);
     }
   };
+  const submitApprovedFollowup = useCallback(
+    async (draft: { incidentId: string; title: string; details: string }) => {
+      if (busy) throw new Error("Another workplace action is already running.");
+      setBusy(true);
+      setError("");
+      try {
+        // Reuse the existing server-enforced proposal boundary. The Realtime
+        // SDK approval happens before this function is allowed to run.
+        const prepared = await api<{ proposal: Proposal }>("", {
+          operation: "propose",
+          ...draft,
+        });
+        const { task } = await api<{ task: WorkplaceTask }>("", {
+          operation: "approve",
+          proposalId: prepared.proposal.id,
+        });
+        setProposal(undefined);
+        setNotice(`Saved and read back from Ambiguous: ${task.id}.`);
+        await refresh();
+        return task;
+      } catch (error) {
+        setError(
+          error instanceof Error
+            ? error.message
+            : "Unable to confirm the write. Refresh before retrying.",
+        );
+        throw error;
+      } finally {
+        setBusy(false);
+      }
+    },
+    [busy, refresh],
+  );
   const deny = async () => {
     if (!proposal || busy) return;
     setBusy(true);
@@ -140,6 +173,7 @@ export function useWorkplace(incidentId: string) {
     retrieve,
     approve,
     deny,
+    submitApprovedFollowup,
   };
 }
 export type WorkplaceControls = ReturnType<typeof useWorkplace>;

@@ -10,6 +10,20 @@
 
 </div>
 
+## Hackathon project: VoiceLayer
+
+VoiceLayer is an accessibility-focused voice control layer for web
+applications. The interface stays visible while an OpenAI Realtime WebRTC
+session listens in the background. The agent receives live CopilotKit page
+context and invokes semantic application actions—selecting records, scrolling,
+filling forms, navigating back, and requesting submission—without simulated
+mouse coordinates. Submission is approval-gated and every interaction is
+available in a compact transcript.
+
+The demo is scoped to this application, uses fictional incident data, and keeps
+submitted follow-ups in browser memory. See the [web quickstart](apps/web/) and
+the [prepared submission package](SUBMISSION.md).
+
 ## Overview
 
 Build for **[Agents, Everywhere: Bots, Channels, & More](https://aitinkerers.org/hackathons/global/agents-everywhere)**, the AI Tinkerers global hackathon on **September 12–13, 2026**. Choose your city on the event page for its local schedule. Put an agent inside a conversation, an app, a phone, or a physical environment. Make the context of that place essential to what it can do.
@@ -23,8 +37,8 @@ Your project and its core functionality must be created during the event. Existi
 Use Node.js 22+, then clone and install the kit:
 
 ```bash
-git clone https://github.com/CopilotKit/agents-everywhere-starter-kit.git
-cd agents-everywhere-starter-kit
+git clone https://github.com/DiscoStew6082/voicelayer.git
+cd voicelayer
 npm ci
 cp .env.example .env
 ```

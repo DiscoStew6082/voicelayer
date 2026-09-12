@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { findIncident, workspaceContext } from "./incidents";
-import type { WorkplaceTask } from "./followup-types";
+import type { DemoFollowup } from "./app-actions";
 
 test("selection changes the shared incident and timeline together", () => {
   const checkout = workspaceContext("INC-1042", []);
@@ -12,18 +12,19 @@ test("selection changes the shared incident and timeline together", () => {
   assert.equal(notifications.availableIncidents.length, 2);
 });
 
-test("workspace context labels sample incidents and provider follow-ups", () => {
-  const tasks: WorkplaceTask[] = [
+test("workspace context labels sample incidents and local demo submissions", () => {
+  const tasks: DemoFollowup[] = [
     {
-      id: "11111111-1111-4111-8111-111111111111",
+      id: "demo-1",
+      incidentId: "INC-1042",
       title: "Check pool metrics",
-      description: "Provider task details\nagents-everywhere:INC-1042",
-      url: null,
+      details: "Check the connection pool after the deploy.",
+      submittedAt: "2026-09-12T14:00:00.000Z",
     },
   ];
   const context = workspaceContext("INC-1042", tasks);
   assert.throws(() => findIncident("unknown"), /Unknown incident/);
   assert.match(context.dataSource, /Fictional sample/);
-  assert.match(context.dataSource, /Ambiguous/);
-  assert.deepEqual(context.followups, tasks);
+  assert.match(context.dataSource, /browser-only/);
+  assert.deepEqual(context.submittedFollowups, tasks);
 });

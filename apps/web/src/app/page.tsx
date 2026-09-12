@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import {
   CopilotChat,
   useConfigureSuggestions,
@@ -8,19 +8,225 @@ import {
 import { GenerativeUI } from "@/components/generative-ui";
 import { AppControl } from "@/components/app-control";
 import { findIncident, incidents, workspaceContext } from "@/lib/incidents";
-import { useWorkplace } from "@/lib/use-workplace";
-import { WorkplaceFollowups } from "@/components/workplace-followups";
+import { DemoFollowups } from "@/components/demo-followups";
+import { VoiceControl } from "@/components/voice-control";
+import type {
+  AppActions,
+  DemoFollowup,
+  FollowupDraft,
+  FollowupField,
+} from "@/lib/app-actions";
 
 export default function Home() {
   const [selectedId, setSelectedId] = useState<string>(incidents[0].id);
-  const workplace = useWorkplace(selectedId);
-  const { selectedIncident: incident } = workspaceContext(
-    selectedId,
-    workplace.status?.status === "connected" ? workplace.status.tasks : [],
+  const [draft, setDraft] = useState<FollowupDraft>({
+    title: "",
+    details: "",
+  });
+  const [submittedFollowups, setSubmittedFollowups] = useState<DemoFollowup[]>([]);
+  const selectionHistory = useRef<string[]>([]);
+  const lastFocusedControl = useRef<string | null>(null);
+  const selectedIdRef = useRef(selectedId);
+  const draftRef = useRef(draft);
+  const submittedFollowupsRef = useRef(submittedFollowups);
+  selectedIdRef.current = selectedId;
+  draftRef.current = draft;
+  submittedFollowupsRef.current = submittedFollowups;
+  const incidentFollowups = submittedFollowups.filter(
+    (item) => item.incidentId === selectedId,
   );
+  const missionIncidentId = incidents[1].id;
+  const missionSubmission = submittedFollowups.find(
+    (item) => item.incidentId === missionIncidentId,
+  );
+  const missionSubmitted = Boolean(missionSubmission);
+  const missionSteps = [
+    {
+      label: "Open the incident",
+      command: "Open the second incident",
+      complete: missionSubmitted || selectedId === missionIncidentId,
+    },
+    {
+      label: "Add a title",
+      command: "Fill the title with Check notification backlog",
+      complete: missionSubmitted || Boolean(draft.title.trim()),
+    },
+    {
+      label: "Add details",
+      command: "Fill the details with Confirm the queue is drained by 10:30",
+      complete: missionSubmitted || Boolean(draft.details.trim()),
+    },
+    {
+      label: "Review and submit",
+      command: "Send it",
+      complete: missionSubmitted,
+    },
+  ];
+  const nextMissionStep = missionSteps.find((step) => !step.complete);
+  const { selectedIncident: incident } = workspaceContext(selectedId, incidentFollowups);
   const selectIncident = useCallback((id: string) => {
-    setSelectedId(findIncident(id).id);
+    const nextId = findIncident(id).id;
+    if (nextId === selectedIdRef.current) return;
+    selectionHistory.current.push(selectedIdRef.current);
+    setSelectedId(nextId);
   }, []);
+
+  const revealActionTarget = useCallback((targetId: string) => {
+    if (typeof window === "undefined") return;
+    window.requestAnimationFrame(() => {
+      const target = document.getElementById(targetId);
+      if (!target) return;
+      target.scrollIntoView({
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+          ? "auto"
+          : "smooth",
+        block: "center",
+      });
+      target.classList.remove("ck-action-target");
+      void target.offsetWidth;
+      target.classList.add("ck-action-target");
+      window.setTimeout(() => target.classList.remove("ck-action-target"), 2200);
+    });
+  }, []);
+
+  const openIncident = useCallback(
+    (id: string) => {
+      const next = findIncident(id);
+      selectIncident(next.id);
+      revealActionTarget("incident-panel");
+      return `Opened ${next.title}.`;
+    },
+    [revealActionTarget, selectIncident],
+  );
+
+  const openIncidentAt = useCallback(
+    (position: number) => {
+      const next = incidents[position - 1];
+      if (!next)
+        return `There is no item ${position}. There are ${incidents.length} visible items.`;
+      return openIncident(next.id);
+    },
+    [openIncident],
+  );
+
+  const goBack = useCallback(() => {
+    const previousId = selectionHistory.current.pop();
+    if (!previousId) return "There is no previous in-app selection.";
+    const previous = findIncident(previousId);
+    setSelectedId(previous.id);
+    revealActionTarget("incident-panel");
+    return `Went back to ${previous.title}.`;
+  }, [revealActionTarget]);
+
+  const scrollPage = useCallback((direction: "up" | "down") => {
+    if (typeof window === "undefined") return "The page is not available.";
+    window.scrollBy({
+      top: (direction === "down" ? 1 : -1) * window.innerHeight * 0.75,
+      behavior: "smooth",
+    });
+    return `Scrolled ${direction}.`;
+  }, []);
+
+  const setFollowupField = useCallback(
+    (field: FollowupField, value: string) => {
+      setDraft((current) => ({ ...current, [field]: value }));
+      revealActionTarget("followup-editor");
+      return `Updated the follow-up ${field} field.`;
+    },
+    [revealActionTarget],
+  );
+
+  const readContext = useCallback(() => {
+    const currentId = selectedIdRef.current;
+    const currentIncident = findIncident(currentId);
+    const followups = submittedFollowupsRef.current.filter(
+      (item) => item.incidentId === currentId,
+    );
+    let focusedControl: string | null = null;
+    let scrollY = 0;
+    let canScrollDown = false;
+    if (typeof document !== "undefined" && typeof window !== "undefined") {
+      const active = document.activeElement;
+      const activeLabel =
+        active?.getAttribute("aria-label") ??
+        (active instanceof HTMLElement ? active.innerText || active.id : null) ??
+        null;
+      focusedControl = active?.closest(".ck-voice-control")
+        ? lastFocusedControl.current
+        : activeLabel || lastFocusedControl.current;
+      scrollY = Math.round(window.scrollY);
+      canScrollDown =
+        window.scrollY + window.innerHeight <
+        document.documentElement.scrollHeight - 2;
+    }
+    return {
+      view: "incident_workspace" as const,
+      dataSource:
+        "Fictional sample incidents. Submitted follow-ups stay in browser memory for this demo.",
+      availableIncidents: incidents.map((item, index) => ({
+        position: index + 1,
+        id: item.id,
+        title: item.title,
+        status: item.status,
+        updated: item.updated,
+      })),
+      selectedIncident: {
+        ...currentIncident,
+        timeline: [...currentIncident.timeline],
+      },
+      selectedPosition:
+        incidents.findIndex((item) => item.id === currentId) + 1,
+      followupForm: { ...draftRef.current },
+      submittedFollowups: followups,
+      focusedControl,
+      viewport: {
+        scrollY,
+        canScrollUp: scrollY > 0,
+        canScrollDown,
+      },
+      pendingAction: null,
+    };
+  }, []);
+
+  const submitApprovedFollowup = useCallback(
+    async (submission: {
+      incidentId: string;
+      title: string;
+      details: string;
+    }) => {
+      const followup: DemoFollowup = {
+        id: `demo-${Date.now()}`,
+        ...submission,
+        submittedAt: new Date().toISOString(),
+      };
+      setSubmittedFollowups((current) => [...current, followup]);
+      setDraft({ title: "", details: "" });
+      revealActionTarget("followup-editor");
+      return followup;
+    },
+    [revealActionTarget],
+  );
+
+  const actions = useMemo<AppActions>(
+    () => ({
+      readContext,
+      openIncident,
+      openIncidentAt,
+      goBack,
+      scrollPage,
+      setFollowupField,
+      submitApprovedFollowup,
+    }),
+    [
+      goBack,
+      openIncident,
+      openIncidentAt,
+      readContext,
+      scrollPage,
+      setFollowupField,
+      submitApprovedFollowup,
+    ],
+  );
 
   useConfigureSuggestions(
     {
@@ -31,9 +237,9 @@ export default function Home() {
             "Summarize the selected incident using the page context. What needs attention?",
         },
         {
-          title: "Propose a follow-up",
+          title: "Fill in a follow-up",
           message:
-            "Prepare one useful Ambiguous follow-up for the selected incident. Show me the proposal before it is saved.",
+            "Fill the visible follow-up title and details with one useful next step for the selected incident. Do not submit it.",
         },
       ],
       available: "before-first-message",
@@ -46,25 +252,56 @@ export default function Home() {
       <GenerativeUI />
       <AppControl
         selectedId={selectedId}
-        selectIncident={selectIncident}
-        workplace={workplace}
+        actions={actions}
       />
       <main className="ck-workspace">
         <header className="ck-workspace-header">
           <div>
-            <p className="ck-eyebrow">Agents, everywhere · Web example</p>
-            <h1>Incident assistant</h1>
+            <p className="ck-eyebrow">Accessibility voice control demo</p>
+            <h1>Complete an incident follow-up by voice</h1>
             <p className="ck-intro">
-              Pick an incident. Ask your assistant. Review a follow-up.
+              Follow the four prompts below. The interface stays visible while
+              voice selects an incident, fills the form, and asks before saving.
             </p>
           </div>
-          <span className="ck-tag">Sample data</span>
+          <span className="ck-tag ck-tag--preview">Voice-ready demo</span>
         </header>
 
+        <section className="ck-voice-guide" aria-labelledby="voice-guide-title">
+          <div className="ck-voice-guide-copy">
+            <span className="ck-kicker">60-second guided demo</span>
+            <h2 id="voice-guide-title">Your mission</h2>
+            <p>
+              Open the delayed-notifications incident, prepare a queue follow-up,
+              then approve the submission. Completed steps turn green.
+            </p>
+          </div>
+          <ol className="ck-demo-walkthrough" aria-label="Guided voice demo steps">
+            {missionSteps.map((step, index) => (
+              <li key={step.label} data-complete={step.complete}>
+                <span aria-hidden="true">{step.complete ? "✓" : index + 1}</span>
+                <div>
+                  <strong>{step.label}</strong>
+                  <code>“{step.command}”</code>
+                </div>
+              </li>
+            ))}
+          </ol>
+          <p className="ck-preview-note">
+            <strong>What this proves:</strong> live page context, semantic UI
+            actions, visible results, and confirmation before a consequential
+            write. All data is fictional and stays in this browser session.
+          </p>
+        </section>
+
         <div className="ck-workspace-grid">
-          <section className="ck-panel" aria-labelledby="incident-title">
+          <section
+            id="incident-panel"
+            className="ck-panel"
+            aria-labelledby="incident-title"
+          >
             <div className="ck-incident-picker">
-              <label htmlFor="incident-select">Incident</label>
+              <label htmlFor="incident-select">Choose an incident</label>
               <select
                 id="incident-select"
                 value={selectedId}
@@ -115,7 +352,18 @@ export default function Home() {
               </details>
             </div>
 
-            <WorkplaceFollowups incidentId={selectedId} workplace={workplace} />
+            <DemoFollowups
+              incidentId={selectedId}
+              draft={draft}
+              submitted={incidentFollowups}
+              setDraftField={(field, value) => {
+                setDraft((current) => ({ ...current, [field]: value }));
+              }}
+              onFocusField={(field) => {
+                lastFocusedControl.current = `follow-up ${field}`;
+              }}
+              onSubmit={submitApprovedFollowup}
+            />
           </section>
 
           <section
@@ -123,19 +371,26 @@ export default function Home() {
             aria-labelledby="assistant-title"
           >
             <header className="ck-assistant-header">
-              <h2 id="assistant-title">Ask assistant</h2>
-              <p>It can read this incident and prepare follow-ups.</p>
+              <h2 id="assistant-title">Optional keyboard fallback</h2>
+              <p>
+                The voice mission works without this chat. Use it only if you
+                want to compare typed and spoken control.
+              </p>
             </header>
             <CopilotChat
               className="ck-chat"
               labels={{
-                welcomeMessageText: "What needs attention?",
-                chatInputPlaceholder: "Ask about this incident…",
+                welcomeMessageText: "What would you like to do?",
+                chatInputPlaceholder: "Ask a question or request a page action…",
               }}
             />
           </section>
         </div>
       </main>
+      <VoiceControl
+        actions={actions}
+        nextCommand={nextMissionStep?.command ?? null}
+      />
     </>
   );
 }

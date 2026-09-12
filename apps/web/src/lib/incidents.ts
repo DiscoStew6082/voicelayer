@@ -1,5 +1,5 @@
-/** Sample incident context. Follow-ups are retrieved separately from Ambiguous. */
-import type { WorkplaceTask } from "./followup-types";
+/** Fictional sample incident context for the local accessibility demo. */
+import type { DemoFollowup } from "./app-actions";
 
 export const incidents = [
   {
@@ -80,11 +80,11 @@ export function findIncident(id: string): Incident {
 
 export function workspaceContext(
   selectedId: string,
-  followups: WorkplaceTask[],
+  followups: DemoFollowup[],
 ) {
   return {
     dataSource:
-      "Fictional sample incidents. Follow-ups shown here were retrieved from Ambiguous for the selected incident. A proposal is not a saved task.",
+      "Fictional sample incidents and browser-only demo submissions. No external workplace is connected.",
     availableIncidents: incidents.map(({ id, title, status }) => ({
       id,
       title,
@@ -94,6 +94,6 @@ export function workspaceContext(
       ...findIncident(selectedId),
       timeline: [...findIncident(selectedId).timeline],
     },
-    followups,
+    submittedFollowups: followups,
   };
 }

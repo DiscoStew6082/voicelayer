@@ -1,78 +1,103 @@
-# An agent inside your web app
+# VoiceLayer: accessible voice control inside your web app
 
-**OpenAI + CopilotKit React + Ambiguous AI**
+**OpenAI Realtime + CopilotKit React**
 
-Build an agent that sees the selected record or page, helps the user act on it, and creates a workplace record that remains after a refresh. Try a customer workspace, project review page, or personal planning app. Replace the sample incident domain with your own project.
+VoiceLayer keeps the normal application visible while voice runs as another
+input method. The OpenAI Realtime agent receives live semantic page context and
+invokes the same application-owned actions exposed to CopilotKit. It can select
+records, scroll, fill fields, go back, and request a submission. Consequential
+actions pause for explicit confirmation. A compact transcript remains available
+for debugging and judging.
 
-[![Web app agent demo](../../assets/demos/web.gif)](../../assets/demos/web.mp4)
+The hackathon prototype uses fictional incidents and keeps submitted follow-ups
+in browser memory. It does not write to an external workplace provider, control
+other websites, or simulate operating-system pointer input.
 
-_Ask for a follow-up, approve it, and reload to find the saved task in Ambiguous. Preview at 3× speed; click for the full MP4._
+## Run locally
 
-## Get started
+Requirements:
 
-Complete the [root clone/install steps](../../README.md#get-started). Configure `.env` with [OpenAI](../../using-sponsor-tools.md#openai) and [Ambiguous AI](../../using-sponsor-tools.md#ambiguous-ai):
+- Node.js 22 or newer
+- An OpenAI API key with Realtime API access
+- Microphone permission in the browser
+
+From the repository root:
+
+```bash
+npm ci
+```
+
+Create a root `.env` file:
 
 ```dotenv
 MODEL_PROVIDER=openai
 OPENAI_API_KEY=your-key
 MODEL=gpt-5.6-sol
-AMBIGUOUS_API_KEY=your-workspace-key
 ```
 
-Choose an OpenAI model your account can use. Use a demo workspace you control for the first write. This web template needs no managed Channel or Intelligence account.
+The server exchanges `OPENAI_API_KEY` for a short-lived Realtime client secret;
+the long-lived key is never sent to the browser. Optional settings are
+`NEXT_PUBLIC_REALTIME_MODEL` and `NEXT_PUBLIC_REALTIME_VOICE`.
 
-To add managed conversation persistence, use the [official Intelligence onboarding prompt](../../README.md#copilotkit-onboarding) with `apps/web` as the selected app. It connects this existing Next.js/CopilotKit app; keep the Ambiguous record workflow and page approval. Saving a task in Ambiguous and persisting a conversation in Intelligence are separate capabilities.
-
-To use OpenRouter, follow the [shared provider settings](../../using-sponsor-tools.md#openrouter): set `MODEL_PROVIDER=openrouter`, `OPENROUTER_API_KEY`, and a `MODEL` slug with tool support. Keep the Ambiguous workspace key; an OpenAI key is not required for OpenRouter chat.
+Start the app:
 
 ```bash
 npm run dev:web
 ```
 
-Open `http://127.0.0.1:3100` or `http://localhost:3100` and select an incident. The dev and start scripts bind the credential-backed approval server to loopback by default; keep that boundary unless you add your own authentication and trusted-origin policy.
+Open <http://127.0.0.1:3100>.
 
-## Try the flow
+## Run the 60-second voice demo
 
-1. Ask: “What's happening here?” Check the answer against the incident currently selected.
-2. Ask: “Create a follow-up for this incident.”
-3. Review the page proposal. Click **Approve & save to Ambiguous** only if the fields are correct. The app should return the actual record ID and any provider link.
-4. Refresh the browser. Ask the agent to retrieve the saved task by its ID from Ambiguous, or click **Refresh from Ambiguous**. Check the same record returns without creating a duplicate.
-5. Repeat with **Decline** and confirm no task is created.
+1. Turn on the floating voice control and allow microphone access.
+2. Say “Open the second incident.”
+3. Say “Fill the title with Check notification backlog.”
+4. Say “Fill the details with Confirm the queue is drained by 10:30.”
+5. Say “Send it.” The agent must pause for confirmation.
+6. Say “Confirm.” Verify the follow-up appears under “Submitted in this
+   session” and all four mission steps remain green.
+7. Expand the transcript to show the requests and semantic tool calls.
 
-The result should be a retrievable Ambiguous record with the same ID after refresh. An assistant message saying it saved something is not sufficient.
+Also try “scroll down,” “select the second one,” “go back,” and “cancel” at the
+confirmation step.
 
-## Customize these files
+## Architecture
 
-| Piece | File |
+The normal CopilotKit agent and the Realtime voice agent remain separate model
+sessions, but they share the application-owned `AppActions` interface:
+
+1. The page owns selection, draft, scroll, navigation, and session submissions.
+2. `AppControl` publishes live state with `useAgentContext` and registers
+   CopilotKit frontend tools with `useFrontendTool`.
+3. `VoiceControl` creates a RealtimeAgent over WebRTC and wraps the same actions
+   as Realtime tools.
+4. The Realtime SDK approval lifecycle blocks `submit_followup` until the user
+   says “confirm” or presses Approve.
+
+No agent manipulates DOM coordinates. The semantic application methods are the
+enforcement and reuse boundary.
+
+## Key files
+
+| Responsibility | File |
 | --- | --- |
-| App and selected record | [src/app/page.tsx](src/app/page.tsx) and [src/lib/incidents.ts](src/lib/incidents.ts) |
-| Context and frontend tools | [src/components/app-control.tsx](src/components/app-control.tsx): `useAgentContext`, `select_incident`, `propose_followup`, `retrieve_followup`, and `refresh_followups` |
-| Approval UI and provider reads | [src/components/workplace-followups.tsx](src/components/workplace-followups.tsx) and [src/lib/use-workplace.ts](src/lib/use-workplace.ts) |
-| Server approval boundary | [src/app/api/followups/route.ts](src/app/api/followups/route.ts) and [src/lib/server/followups.ts](src/lib/server/followups.ts) |
-| Ambiguous MCP adapter | [src/lib/server/workplace.ts](src/lib/server/workplace.ts), reads workspace context and saves approved tasks |
-| CopilotKit React UI | [src/components/generative-ui.tsx](src/components/generative-ui.tsx) and [src/components/providers.tsx](src/components/providers.tsx) |
-| Agent endpoint | [src/app/api/copilotkit/[[...path]]/route.ts](src/app/api/copilotkit/[[...path]]/route.ts), configured without raw workplace write tools |
+| Visible workspace and application state | `src/app/page.tsx` |
+| Shared semantic action types | `src/lib/app-actions.ts` |
+| CopilotKit context and frontend tools | `src/components/app-control.tsx` |
+| Realtime voice session, tools, approval, transcript | `src/components/voice-control.tsx` |
+| Visible confirmation and session submissions | `src/components/demo-followups.tsx` |
+| Ephemeral Realtime credential route | `src/app/api/realtime-token/route.ts` |
+| Short voice-agent instructions | `../../packages/agent-core/src/prompt.ts` |
 
-The web chat does not receive raw Ambiguous write tools. It can propose a task and read or refresh existing records through frontend tools; the server writes only after the user clicks **Approve & save to Ambiguous**. Tool schemas come from the MCP server at write time, and returned links must come from Ambiguous rather than being invented.
+## Verify
 
-## Give this to your coding agent
+From the repository root:
 
-```text
-Read the root hackathon overview, rules, sponsor guide, and AGENTS.md.
-Explain the model-only and Intelligence options in README.md's CopilotKit
-onboarding section. If I choose Intelligence, follow its official onboarding
-prompt for apps/web before customizing; preserve this existing integration.
-Adapt apps/web to our user and workflow. Keep CopilotKit React for page context,
-frontend tools, agent-rendered UI, and page approval. Use Ambiguous AI for
-persistent records. Do not expose raw write tools to the web chat when the page
-approval path is required. Return the real record ID/link and verify read-back
-after refresh. Keep credentials server-side and enforce authorization at the
-write boundary. Run npm run verify and npm run build --workspace web, then
-document the live record create/read/decline checks.
+```bash
+npm run verify
+npm run build --workspace web
 ```
 
-## Verify and limits
-
-Run `npm run verify` and `npm run build --workspace web` for local checks. Then try the create/read/decline flow with your own workspace. Offline tests cover the approval boundary and error handling; they do not make live provider calls.
-
-[CopilotKit docs](https://docs.copilotkit.ai/) · [Sponsor authentication and first calls](../../using-sponsor-tools.md) · [Demo prompts](../../dev-docs/demo-prompts.md)
+Automated checks do not exercise microphone hardware or a live Realtime
+session. Before recording, run the complete spoken workflow and cancellation
+path in the target browser.

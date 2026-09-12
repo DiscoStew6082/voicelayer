@@ -3,45 +3,21 @@
 import { useFrontendTool, useAgentContext } from "@copilotkit/react-core/v2";
 import { z } from "zod";
 import { findIncident, workspaceContext } from "@/lib/incidents";
-import type { WorkplaceControls } from "@/lib/use-workplace";
-
-async function toolResult<T>(action: () => Promise<T>) {
-  try {
-    return await action();
-  } catch (error) {
-    return {
-      status: "error",
-      message:
-        error instanceof Error
-          ? error.message
-          : "Workplace operation failed. Check the page for setup details.",
-    };
-  }
-}
+import type { AppActions } from "@/lib/app-actions";
 
 export function AppControl({
   selectedId,
-  selectIncident,
-  workplace,
+  actions,
 }: {
   selectedId: string;
-  selectIncident: (id: string) => void;
-  workplace: WorkplaceControls;
+  actions: AppActions;
 }) {
-  const { status, propose, retrieve } = workplace;
-
   useAgentContext({
     description:
-      "The incident workspace currently visible to the user, including sample timeline and Ambiguous follow-ups. CRITICAL: propose_followup only prepares a proposal. Only the user's approval button saves it; prose/chat approval never executes a write. Use retrieve_followup or refresh_followups for real reads. Never claim a task was saved without a provider record. Never invent record links.",
+      "The incident workspace currently visible to the user, including the selected sample incident, draft fields, browser-only demo submissions, focus, and scroll state. Use semantic page tools instead of describing clicks or coordinates.",
     value: {
-      ...workspaceContext(
-        selectedId,
-        status?.status === "connected" ? status.tasks : [],
-      ),
-      workplace: status?.status ?? "unavailable",
-      workplaceError: workplace.error,
-      proposal: workplace.proposal ?? null,
-      lastResult: workplace.notice,
+      ...workspaceContext(selectedId, actions.readContext().submittedFollowups),
+      visibleApplication: actions.readContext(),
     },
   });
 
@@ -53,52 +29,55 @@ export function AppControl({
       parameters: z.object({ incidentId: z.string() }),
       handler: async ({ incidentId }) => {
         const incident = findIncident(incidentId);
-        selectIncident(incident.id);
-        return `Opened ${incident.id}: ${incident.title}. The visible details and agent context now show this incident.`;
+        return actions.openIncident(incident.id);
       },
     },
-    [selectIncident],
+    [actions.openIncident],
   );
 
   useFrontendTool(
     {
-      name: "propose_followup",
+      name: "select_visible_item",
       description:
-        "Prepare an Ambiguous task from the selected incident context. Show the exact title and details for the user's approval button. Does not save anything. CRITICAL: wait for the user to click Approve & save to Ambiguous in the page.",
-      parameters: z.object({
-        incidentId: z.string(),
-        title: z.string().trim().min(1).max(200),
-        details: z.string().trim().min(1).max(4000),
-      }),
-      handler: async (draft) =>
-        toolResult(async () => ({
-          status: "pending_approval",
-          proposal: await propose(draft),
-        })),
+        "Select an incident by its one-based position in visibleApplication.availableIncidents.",
+      parameters: z.object({ position: z.number().int().min(1) }),
+      handler: async ({ position }) => actions.openIncidentAt(position),
     },
-    [propose],
+    [actions.openIncidentAt],
   );
 
   useFrontendTool(
     {
-      name: "retrieve_followup",
-      description:
-        "Retrieve an existing Ambiguous task by its actual ID. Read-only; never creates a duplicate.",
-      parameters: z.object({ id: z.uuid() }),
-      handler: async ({ id }) => toolResult(() => retrieve(id)),
+      name: "scroll_page",
+      description: "Scroll the visible application up or down by one viewport step.",
+      parameters: z.object({ direction: z.enum(["up", "down"]) }),
+      handler: async ({ direction }) => actions.scrollPage(direction),
     },
-    [retrieve],
+    [actions.scrollPage],
   );
 
   useFrontendTool(
     {
-      name: "refresh_followups",
-      description:
-        "Read saved follow-ups for the currently selected incident from Ambiguous. Use after approval or browser refresh to verify persistence.",
+      name: "go_back",
+      description: "Return to the previously selected incident in this application.",
       parameters: z.object({}),
-      handler: async () => toolResult(() => workplace.refresh()),
+      handler: async () => actions.goBack(),
     },
-    [workplace.refresh],
+    [actions.goBack],
+  );
+
+  useFrontendTool(
+    {
+      name: "set_followup_field",
+      description: "Fill a visible follow-up form field with the user's text.",
+      parameters: z.object({
+        field: z.enum(["title", "details"]),
+        value: z.string().max(4000),
+      }),
+      handler: async ({ field, value }) =>
+        actions.setFollowupField(field, value),
+    },
+    [actions.setFollowupField],
   );
 
   return null;
