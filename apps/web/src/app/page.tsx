@@ -257,42 +257,14 @@ export default function Home() {
       <main className="ck-workspace">
         <header className="ck-workspace-header">
           <div>
-            <p className="ck-eyebrow">Accessibility voice control demo</p>
-            <h1>Complete an incident follow-up by voice</h1>
+            <p className="ck-eyebrow">Incident operations</p>
+            <h1>Incident response workspace</h1>
             <p className="ck-intro">
-              Follow the four prompts below. The interface stays visible while
-              voice selects an incident, fills the form, and asks before saving.
+              Review active incidents and coordinate the next response.
             </p>
           </div>
-          <span className="ck-tag ck-tag--preview">Voice-ready demo</span>
+          <span className="ck-tag ck-tag--preview">Voice control available</span>
         </header>
-
-        <section className="ck-voice-guide" aria-labelledby="voice-guide-title">
-          <div className="ck-voice-guide-copy">
-            <span className="ck-kicker">60-second guided demo</span>
-            <h2 id="voice-guide-title">Your mission</h2>
-            <p>
-              Open the delayed-notifications incident, prepare a queue follow-up,
-              then approve the submission. Completed steps turn green.
-            </p>
-          </div>
-          <ol className="ck-demo-walkthrough" aria-label="Guided voice demo steps">
-            {missionSteps.map((step, index) => (
-              <li key={step.label} data-complete={step.complete}>
-                <span aria-hidden="true">{step.complete ? "✓" : index + 1}</span>
-                <div>
-                  <strong>{step.label}</strong>
-                  <code>“{step.command}”</code>
-                </div>
-              </li>
-            ))}
-          </ol>
-          <p className="ck-preview-note">
-            <strong>What this proves:</strong> live page context, semantic UI
-            actions, visible results, and confirmation before a consequential
-            write. All data is fictional and stays in this browser session.
-          </p>
-        </section>
 
         <div className="ck-workspace-grid">
           <section
@@ -371,10 +343,9 @@ export default function Home() {
             aria-labelledby="assistant-title"
           >
             <header className="ck-assistant-header">
-              <h2 id="assistant-title">Optional keyboard fallback</h2>
+              <h2 id="assistant-title">Assistant</h2>
               <p>
-                The voice mission works without this chat. Use it only if you
-                want to compare typed and spoken control.
+                Type or speak to work with the currently selected incident.
               </p>
             </header>
             <CopilotChat

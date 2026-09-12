@@ -39,7 +39,7 @@ export function DemoFollowups({
   async function approve() {
     await onSubmit({ incidentId, ...draft });
     setReviewing(false);
-    setNotice("Submitted in this demo. Nothing was sent outside the browser.");
+    setNotice("Saved for this session. Nothing was sent outside the browser.");
   }
 
   return (
@@ -56,7 +56,7 @@ export function DemoFollowups({
             always requires your confirmation.
           </p>
         </div>
-        <span className="ck-tag">Browser demo</span>
+        <span className="ck-tag">Session-only</span>
       </header>
 
       {submitted.length > 0 && (
@@ -113,8 +113,8 @@ export function DemoFollowups({
           <strong>{draft.title}</strong>
           <p className="ck-preserve-lines">{draft.details}</p>
           <p>
-            This only updates the on-screen demo. Nothing will be sent to an
-            external service.
+            This saves only in the current browser session. Nothing will be sent
+            to an external service.
           </p>
           <div className="ck-approval-actions">
             <button

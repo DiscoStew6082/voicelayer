@@ -190,7 +190,7 @@ export function VoiceControl({
     const submitFollowup = tool({
       name: "submit_followup",
       description:
-        "Consequential demo action: submit the currently visible follow-up to the on-screen session list. Copy the selected incident and exact visible field values from read_app_context. The application requires explicit approval before execution.",
+        "Consequential session-only action: submit the currently visible follow-up to the on-screen list. Copy the selected incident and exact visible field values from read_app_context. The application requires explicit approval before execution.",
       parameters: z.object({
         incidentId: z.string(),
         title: z.string().trim().min(1).max(200),
@@ -208,7 +208,7 @@ export function VoiceControl({
           return "The visible selection or draft changed. Read app context again and do not submit stale values.";
         }
         const submitted = await actionsRef.current.submitApprovedFollowup(draft);
-        return `Submitted ${submitted.title} in the on-screen demo.`;
+        return `Saved ${submitted.title} for this browser session.`;
       },
     });
 
