@@ -115,7 +115,7 @@ Source: https://github.com/DiscoStew6082/voicelayer
 
 Demo: https://youtu.be/BfQfWDRaw8E
 
-## Social post draft
+## Published social post
 
 > Built VoiceLayer at #AgentsEverywhere Atlanta: accessible voice control that
 > keeps the UI visible while an @OpenAI Realtime agent uses @CopilotKit context
@@ -123,6 +123,8 @@ Demo: https://youtu.be/BfQfWDRaw8E
 > <https://github.com/DiscoStew6082/voicelayer> Demo:
 > <https://youtu.be/BfQfWDRaw8E>
 > @AITinkerers
+
+Post: https://x.com/discostew6082/status/2098862937226063990
 
 ## Final checklist
 
@@ -138,5 +140,6 @@ Demo: https://youtu.be/BfQfWDRaw8E
 - [x] Add repository and video URLs to the social post
 - [x] Include the event host and used sponsor handles: @AITinkerers, @OpenAI,
   and @CopilotKit
-- [ ] Publish the social post
-- [ ] Sign in and submit through the Atlanta portal before 4:30 PM EDT
+- [x] Publish the social post
+- [x] Submit through the Atlanta portal (submitted September 12, 2026 at
+  3:57 PM EDT)
