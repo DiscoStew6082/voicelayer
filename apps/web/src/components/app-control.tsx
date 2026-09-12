@@ -23,6 +23,17 @@ export function AppControl({
 
   useFrontendTool(
     {
+      name: "show_incident_list",
+      description:
+        "Visibly open the incident list so the user can inspect the available choices.",
+      parameters: z.object({}),
+      handler: async () => actions.showIncidentList(),
+    },
+    [actions.showIncidentList],
+  );
+
+  useFrontendTool(
+    {
       name: "select_incident",
       description:
         "Open an existing sample incident in the workspace. Use an ID from availableIncidents.",

@@ -67,8 +67,9 @@ and floating microphone.
 
 **0:15–0:35 — Contextual navigation**
 
-Start voice and say, “Open the second incident.” Point out that the incident
-selection changes in the existing interface. Say, “Scroll down.”
+Start voice and say, “Show available incidents.” The visible list opens. Then
+say, “Select the second one,” and point out that the incident changes in the
+existing interface. Say, “Scroll down.”
 
 **0:35–1:10 — Semantic form control**
 

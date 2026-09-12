@@ -23,14 +23,17 @@ export default function Home() {
     title: "",
     details: "",
   });
+  const [incidentListOpen, setIncidentListOpen] = useState(false);
   const [submittedFollowups, setSubmittedFollowups] = useState<DemoFollowup[]>([]);
   const selectionHistory = useRef<string[]>([]);
   const lastFocusedControl = useRef<string | null>(null);
   const selectedIdRef = useRef(selectedId);
   const draftRef = useRef(draft);
+  const incidentListOpenRef = useRef(incidentListOpen);
   const submittedFollowupsRef = useRef(submittedFollowups);
   selectedIdRef.current = selectedId;
   draftRef.current = draft;
+  incidentListOpenRef.current = incidentListOpen;
   submittedFollowupsRef.current = submittedFollowups;
   const incidentFollowups = submittedFollowups.filter(
     (item) => item.incidentId === selectedId,
@@ -38,6 +41,7 @@ export default function Home() {
   const { selectedIncident: incident } = workspaceContext(selectedId, incidentFollowups);
   const selectIncident = useCallback((id: string) => {
     const nextId = findIncident(id).id;
+    setIncidentListOpen(false);
     if (nextId === selectedIdRef.current) return;
     selectionHistory.current.push(selectedIdRef.current);
     setSelectedId(nextId);
@@ -70,6 +74,12 @@ export default function Home() {
     },
     [revealActionTarget, selectIncident],
   );
+
+  const showIncidentList = useCallback(() => {
+    setIncidentListOpen(true);
+    revealActionTarget("incident-picker");
+    return `Showing ${incidents.length} available incidents.`;
+  }, [revealActionTarget]);
 
   const openIncidentAt = useCallback(
     (position: number) => {
@@ -148,6 +158,7 @@ export default function Home() {
       },
       selectedPosition:
         incidents.findIndex((item) => item.id === currentId) + 1,
+      incidentListOpen: incidentListOpenRef.current,
       followupForm: { ...draftRef.current },
       submittedFollowups: followups,
       focusedControl,
@@ -182,6 +193,7 @@ export default function Home() {
   const actions = useMemo<AppActions>(
     () => ({
       readContext,
+      showIncidentList,
       openIncident,
       openIncidentAt,
       goBack,
@@ -196,6 +208,7 @@ export default function Home() {
       readContext,
       scrollPage,
       setFollowupField,
+      showIncidentList,
       submitApprovedFollowup,
     ],
   );
@@ -244,19 +257,46 @@ export default function Home() {
             className="ck-panel"
             aria-labelledby="incident-title"
           >
-            <div className="ck-incident-picker">
-              <label htmlFor="incident-select">Choose an incident</label>
-              <select
-                id="incident-select"
-                value={selectedId}
-                onChange={(event) => selectIncident(event.target.value)}
-              >
-                {incidents.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.id} · {item.service}
-                  </option>
-                ))}
-              </select>
+            <div id="incident-picker" className="ck-incident-picker">
+              <label id="incident-picker-label" htmlFor="incident-picker-button">
+                Choose an incident
+              </label>
+              <div className="ck-incident-menu">
+                <button
+                  id="incident-picker-button"
+                  type="button"
+                  className="ck-incident-trigger"
+                  aria-haspopup="listbox"
+                  aria-expanded={incidentListOpen}
+                  aria-controls="incident-options"
+                  onClick={() => setIncidentListOpen((open) => !open)}
+                >
+                  <span>{incident.id} · {incident.service}</span>
+                  <span aria-hidden="true">{incidentListOpen ? "▲" : "▼"}</span>
+                </button>
+                {incidentListOpen && (
+                  <ul
+                    id="incident-options"
+                    className="ck-incident-options"
+                    role="listbox"
+                    aria-labelledby="incident-picker-label"
+                  >
+                    {incidents.map((item, index) => (
+                      <li key={item.id}>
+                        <button
+                          type="button"
+                          role="option"
+                          aria-selected={item.id === selectedId}
+                          onClick={() => selectIncident(item.id)}
+                        >
+                          <span>{index + 1}. {item.title}</span>
+                          <small>{item.id} · {item.service} · {item.status}</small>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
             </div>
 
             <div className="ck-detail">

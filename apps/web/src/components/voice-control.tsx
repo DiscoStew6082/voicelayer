@@ -143,6 +143,14 @@ export function VoiceControl({ actions }: { actions: AppActions }) {
         actionsRef.current.openIncident(incidentId),
     });
 
+    const showIncidentList = tool({
+      name: "show_incident_list",
+      description:
+        "Visibly open the application's incident list so the user can inspect every available incident. Use for commands like 'show available incidents', 'open the incident menu', or 'what incidents can I choose from?'.",
+      parameters: z.object({}),
+      execute: async () => actionsRef.current.showIncidentList(),
+    });
+
     const selectVisibleItem = tool({
       name: "select_visible_item",
       description:
@@ -212,6 +220,7 @@ export function VoiceControl({ actions }: { actions: AppActions }) {
       tools: [
         readAppContext,
         ignoreNonCommand,
+        showIncidentList,
         openIncident,
         selectVisibleItem,
         scrollPage,

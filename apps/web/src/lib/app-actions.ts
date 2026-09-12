@@ -35,6 +35,7 @@ export type AppContextSnapshot = {
     timeline: Array<{ time: string; author: string; detail: string }>;
   };
   selectedPosition: number;
+  incidentListOpen: boolean;
   followupForm: FollowupDraft;
   submittedFollowups: DemoFollowup[];
   focusedControl: string | null;
@@ -52,6 +53,7 @@ export type AppContextSnapshot = {
  */
 export type AppActions = {
   readContext: () => AppContextSnapshot;
+  showIncidentList: () => string;
   openIncident: (incidentId: string) => string;
   openIncidentAt: (position: number) => string;
   goBack: () => string;

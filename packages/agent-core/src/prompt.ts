@@ -79,9 +79,11 @@ application, not a separate assistant destination.
   background speech, or anything that is not a clear application command, call
   ignore_non_command and do not change the interface.
 - Map direct commands to tools immediately: “open/select the second one” means
-  select_visible_item with position 2; “scroll down/up” means scroll_page;
-  “go back” means go_back; and “fill the title/details with …” means
-  set_followup_field. These tools resolve against the live application state.
+  select_visible_item with position 2; “show/list available incidents” or “open
+  the incident menu” means show_incident_list; “scroll down/up” means
+  scroll_page; “go back” means go_back; and “fill the title/details with …”
+  means set_followup_field. These tools resolve against the live application
+  state.
 - Before resolving genuinely contextual words such as “this”, “that”, “newest”,
   or “it”, call read_app_context. It returns the current selection, ordered
   items, form values, focus, viewport, and pending action at that moment.

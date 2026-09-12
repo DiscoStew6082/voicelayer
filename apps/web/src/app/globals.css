@@ -287,15 +287,62 @@ p {
   font-size: 12px;
   color: var(--muted);
 }
-.ck-incident-picker select {
+.ck-incident-menu {
+  position: relative;
   flex: 1;
   min-width: 0;
   max-width: 100%;
+}
+.ck-incident-trigger {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   color: var(--text);
   background: var(--surface-raised);
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 10px;
+  text-align: left;
+}
+.ck-incident-options {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 8px);
+  right: 0;
+  left: 0;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 18px 48px rgb(0 0 0 / 48%);
+}
+.ck-incident-options button {
+  display: block;
+  width: 100%;
+  padding: 10px 12px;
+  color: var(--text);
+  background: transparent;
+  border: 0;
+  border-radius: 7px;
+  text-align: left;
+}
+.ck-incident-options button:hover,
+.ck-incident-options button:focus-visible,
+.ck-incident-options button[aria-selected="true"] {
+  background: color-mix(in srgb, var(--accent) 13%, var(--surface));
+}
+.ck-incident-options span,
+.ck-incident-options small {
+  display: block;
+}
+.ck-incident-options small {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 10px;
 }
 .ck-detail {
   padding: 24px 0;
