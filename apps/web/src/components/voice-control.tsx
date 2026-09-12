@@ -251,20 +251,6 @@ export function VoiceControl({ actions }: { actions: AppActions }) {
             // then require a stronger nearby signal before starting a turn so
             // surrounding conversations are less likely to become commands.
             noiseReduction: { type: "far_field" },
-            transcription: {
-              model: "gpt-4o-mini-transcribe",
-              language: "en",
-              keywords: [
-                "yes",
-                "confirm",
-                "approve",
-                "I approve",
-                "no",
-                "cancel",
-              ],
-              prompt:
-                "This is an application voice-control session. Preserve short approval replies exactly, especially: yes, confirm, I approve, no, and cancel.",
-            },
             turnDetection: {
               type: "server_vad",
               threshold: 0.72,
