@@ -23,7 +23,11 @@ export function confirmationDecision(text: string): ConfirmationDecision {
 
   if (
     /\b(confirm|approve)\b/.test(normalized) ||
-    /^(yes\b|go ahead\b|do it\b|proceed\b)/.test(normalized)
+    /^(yes\b|go ahead\b|do it\b|proceed\b)/.test(normalized) ||
+    // In the captured noisy-room demo, an explicit "I approve" was
+    // transcribed as the exact homophone "I'll prove." Accept only that short
+    // standalone recognition variant, and only while an approval is pending.
+    /^(i'll|ill) prove$/.test(normalized)
   ) {
     return "approve";
   }

@@ -12,6 +12,7 @@ test("accepts natural but explicit approval phrases", () => {
     "Go ahead please",
     "Do it",
     "Proceed",
+    "I'll prove.",
   ]) {
     assert.equal(confirmationDecision(phrase), "approve", phrase);
   }
@@ -32,7 +33,13 @@ test("negative language always rejects a pending action", () => {
 });
 
 test("does not treat an ambiguous repeat of the action as approval", () => {
-  for (const phrase of ["Send it", "Maybe", "What changed?", "Sure"]) {
+  for (const phrase of [
+    "Send it",
+    "Maybe",
+    "What changed?",
+    "Sure",
+    "I'll prove this works",
+  ]) {
     assert.equal(confirmationDecision(phrase), null, phrase);
   }
 });

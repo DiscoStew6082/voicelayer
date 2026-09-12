@@ -251,6 +251,20 @@ export function VoiceControl({ actions }: { actions: AppActions }) {
             // then require a stronger nearby signal before starting a turn so
             // surrounding conversations are less likely to become commands.
             noiseReduction: { type: "far_field" },
+            transcription: {
+              model: "gpt-4o-mini-transcribe",
+              language: "en",
+              keywords: [
+                "yes",
+                "confirm",
+                "approve",
+                "I approve",
+                "no",
+                "cancel",
+              ],
+              prompt:
+                "This is an application voice-control session. Preserve short approval replies exactly, especially: yes, confirm, I approve, no, and cancel.",
+            },
             turnDetection: {
               type: "server_vad",
               threshold: 0.72,
@@ -437,7 +451,7 @@ export function VoiceControl({ actions }: { actions: AppActions }) {
             <strong>Submit this follow-up?</strong>
             <span>{pendingApproval.draft.title}</span>
             <p>{pendingApproval.draft.details}</p>
-            <p>Say “confirm” or “cancel”, or use these buttons.</p>
+            <p>Say “yes, confirm” or “no, cancel”, or use these buttons.</p>
             <div className="ck-approval-actions">
               <button
                 type="button"
@@ -480,7 +494,7 @@ export function VoiceControl({ actions }: { actions: AppActions }) {
             <strong>{statusLabel}</strong>
             <span aria-live="polite">
               {status === "confirming"
-                ? "Say confirm or cancel"
+                ? "Say “yes, confirm” or “no, cancel”"
                 : active
                   ? "Control this page by voice"
                   : "Select to start listening"}
