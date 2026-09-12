@@ -110,7 +110,7 @@ application-owned semantic actions, not mouse coordinates.”
 - [x] Inherited starter work and hackathon work identified separately
 - [x] Complete voice workflow and cancellation/confirmation behavior implemented
 - [x] Sample data and browser-session persistence clearly labeled
-- [x] Run final verification and production build (3 typechecks, 34 tests, build)
+- [x] Run final verification and production build (3 typechecks, 37 tests, build)
 - [x] Create a participant-owned public GitHub repository
 - [ ] Confirm `.env` and secrets are absent from the public repository
 - [ ] Record and upload a video no longer than two minutes

@@ -11,6 +11,7 @@ import { ACCESSIBILITY_VOICE_PROMPT } from "agent-core/shared";
 import { z } from "zod";
 import type { AppActions, FollowupDraft } from "@/lib/app-actions";
 import { REALTIME_MODEL } from "@/lib/realtime-config";
+import { confirmationDecision } from "@/lib/voice-confirmation";
 
 type VoiceStatus =
   | "idle"
@@ -55,27 +56,6 @@ function latestCompletedUserMessage(history: RealtimeItem[]) {
     );
 }
 
-function confirmationDecision(text: string): "approve" | "reject" | null {
-  const normalized = text
-    .toLowerCase()
-    .replace(/[^a-z\s']/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-  if (
-    ["confirm", "confirmed", "approve", "yes confirm", "yes approve", "go ahead", "do it"].includes(
-      normalized,
-    )
-  )
-    return "approve";
-  if (
-    ["cancel", "reject", "stop", "no", "do not send", "don't send"].includes(
-      normalized,
-    )
-  )
-    return "reject";
-  return null;
-}
-
 export function VoiceControl({ actions }: { actions: AppActions }) {
   const [status, setStatus] = useState<VoiceStatus>("idle");
   const [error, setError] = useState("");
@@ -98,6 +78,9 @@ export function VoiceControl({ actions }: { actions: AppActions }) {
       setPendingApproval(null);
       setStatus("working");
       try {
+        // A spoken approval also starts a normal Realtime response. Cancel that
+        // competing response before resuming the SDK's pending tool call.
+        session.interrupt();
         if (decision === "approve") {
           await session.approve(pending.item);
         } else {
