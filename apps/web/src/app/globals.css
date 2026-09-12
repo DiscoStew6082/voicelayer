@@ -658,7 +658,6 @@ p {
 }
 .ck-voice-bar,
 .ck-voice-approval,
-.ck-voice-next,
 .ck-voice-result,
 .ck-voice-transcript,
 .ck-voice-error {
@@ -708,38 +707,12 @@ p {
   }
 }
 .ck-voice-approval,
-.ck-voice-next,
 .ck-voice-result,
 .ck-voice-error,
 .ck-voice-transcript {
   margin: 8px 8px 0;
   border-radius: 12px;
   padding: 14px;
-}
-.ck-voice-next {
-  border-color: color-mix(in srgb, var(--accent) 36%, var(--border));
-  background: color-mix(in srgb, var(--surface-raised) 96%, transparent);
-}
-.ck-voice-next span,
-.ck-voice-next strong,
-.ck-voice-next small {
-  display: block;
-}
-.ck-voice-next span {
-  margin-bottom: 3px;
-  color: var(--accent);
-  font: 600 10px/1.4 "Spline Sans Mono", monospace;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-.ck-voice-next strong {
-  font-size: 12px;
-  line-height: 1.45;
-}
-.ck-voice-next small {
-  margin-top: 5px;
-  color: var(--muted);
-  font-size: 10px;
 }
 .ck-voice-result {
   display: flex;

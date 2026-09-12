@@ -55,7 +55,7 @@ Open <http://127.0.0.1:3100>.
 4. Say “Fill the details with Confirm the queue is drained by 10:30.”
 5. Say “Send it.” The agent must pause for confirmation.
 6. Say “Confirm.” Verify the follow-up appears under “Submitted in this
-   session” and all four mission steps remain green.
+   session.”
 7. Expand the transcript to show the requests and semantic tool calls.
 
 Also try “scroll down,” “select the second one,” “go back,” and “cancel” at the

@@ -74,7 +74,7 @@ selection changes in the existing interface. Say, “Scroll down.”
 
 Say, “Fill the title with Check notification backlog,” followed by, “Fill the
 details with Confirm the queue is drained by 10:30.” Show the visible fields
-update and the mission progress turn green.
+update in place.
 
 **1:10–1:35 — Human control**
 

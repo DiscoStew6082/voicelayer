@@ -76,13 +76,7 @@ function confirmationDecision(text: string): "approve" | "reject" | null {
   return null;
 }
 
-export function VoiceControl({
-  actions,
-  nextCommand,
-}: {
-  actions: AppActions;
-  nextCommand: string | null;
-}) {
+export function VoiceControl({ actions }: { actions: AppActions }) {
   const [status, setStatus] = useState<VoiceStatus>("idle");
   const [error, setError] = useState("");
   const [transcript, setTranscript] = useState<string[]>([]);
@@ -377,7 +371,6 @@ export function VoiceControl({
   useEffect(() => disconnect, [disconnect]);
 
   const active = !["idle", "error"].includes(status);
-  const readyForCommand = status === "listening";
   const statusLabel =
     status === "idle"
       ? "Voice control off"
@@ -410,26 +403,6 @@ export function VoiceControl({
                 : "Select to start listening"}
           </span>
         </div>
-      </div>
-
-      <div className="ck-voice-next" role="status" aria-live="polite">
-        <span>
-          {!active
-            ? "Start voice, then say"
-            : !readyForCommand
-              ? "Wait for Listening"
-              : nextCommand
-                ? "Say this next"
-                : "Mission complete"}
-        </span>
-        <strong>
-          {active && !readyForCommand
-            ? "Finishing the previous command…"
-            : nextCommand
-              ? `“${nextCommand}”`
-              : "All four steps are complete."}
-        </strong>
-        <small>Leave voice control on between steps.</small>
       </div>
 
       {lastAction && (

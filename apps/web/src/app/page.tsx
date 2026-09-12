@@ -35,34 +35,6 @@ export default function Home() {
   const incidentFollowups = submittedFollowups.filter(
     (item) => item.incidentId === selectedId,
   );
-  const missionIncidentId = incidents[1].id;
-  const missionSubmission = submittedFollowups.find(
-    (item) => item.incidentId === missionIncidentId,
-  );
-  const missionSubmitted = Boolean(missionSubmission);
-  const missionSteps = [
-    {
-      label: "Open the incident",
-      command: "Open the second incident",
-      complete: missionSubmitted || selectedId === missionIncidentId,
-    },
-    {
-      label: "Add a title",
-      command: "Fill the title with Check notification backlog",
-      complete: missionSubmitted || Boolean(draft.title.trim()),
-    },
-    {
-      label: "Add details",
-      command: "Fill the details with Confirm the queue is drained by 10:30",
-      complete: missionSubmitted || Boolean(draft.details.trim()),
-    },
-    {
-      label: "Review and submit",
-      command: "Send it",
-      complete: missionSubmitted,
-    },
-  ];
-  const nextMissionStep = missionSteps.find((step) => !step.complete);
   const { selectedIncident: incident } = workspaceContext(selectedId, incidentFollowups);
   const selectIncident = useCallback((id: string) => {
     const nextId = findIncident(id).id;
@@ -358,10 +330,7 @@ export default function Home() {
           </section>
         </div>
       </main>
-      <VoiceControl
-        actions={actions}
-        nextCommand={nextMissionStep?.command ?? null}
-      />
+      <VoiceControl actions={actions} />
     </>
   );
 }
