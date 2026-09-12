@@ -151,6 +151,15 @@ export function VoiceControl({ actions }: { actions: AppActions }) {
       execute: async () => actionsRef.current.showIncidentList(),
     });
 
+    const setIncidentDetails = tool({
+      name: "set_incident_details",
+      description:
+        "Visibly open or close the selected incident's details and timeline. Use expanded true for 'open/show details' or 'show the timeline', and false for 'close/hide details'.",
+      parameters: z.object({ expanded: z.boolean() }),
+      execute: async ({ expanded }) =>
+        actionsRef.current.setIncidentDetails(expanded),
+    });
+
     const selectVisibleItem = tool({
       name: "select_visible_item",
       description:
@@ -221,6 +230,7 @@ export function VoiceControl({ actions }: { actions: AppActions }) {
         readAppContext,
         ignoreNonCommand,
         showIncidentList,
+        setIncidentDetails,
         openIncident,
         selectVisibleItem,
         scrollPage,

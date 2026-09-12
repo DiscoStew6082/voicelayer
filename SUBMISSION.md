@@ -69,7 +69,7 @@ and floating microphone.
 
 Start voice and say, “Show available incidents.” The visible list opens. Then
 say, “Select the second one,” and point out that the incident changes in the
-existing interface. Say, “Scroll down.”
+existing interface. Say, “Open the details,” then “Scroll down.”
 
 **0:35–1:10 — Semantic form control**
 

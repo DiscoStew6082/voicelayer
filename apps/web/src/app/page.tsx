@@ -24,16 +24,19 @@ export default function Home() {
     details: "",
   });
   const [incidentListOpen, setIncidentListOpen] = useState(false);
+  const [incidentDetailsOpen, setIncidentDetailsOpen] = useState(false);
   const [submittedFollowups, setSubmittedFollowups] = useState<DemoFollowup[]>([]);
   const selectionHistory = useRef<string[]>([]);
   const lastFocusedControl = useRef<string | null>(null);
   const selectedIdRef = useRef(selectedId);
   const draftRef = useRef(draft);
   const incidentListOpenRef = useRef(incidentListOpen);
+  const incidentDetailsOpenRef = useRef(incidentDetailsOpen);
   const submittedFollowupsRef = useRef(submittedFollowups);
   selectedIdRef.current = selectedId;
   draftRef.current = draft;
   incidentListOpenRef.current = incidentListOpen;
+  incidentDetailsOpenRef.current = incidentDetailsOpen;
   submittedFollowupsRef.current = submittedFollowups;
   const incidentFollowups = submittedFollowups.filter(
     (item) => item.incidentId === selectedId,
@@ -42,6 +45,7 @@ export default function Home() {
   const selectIncident = useCallback((id: string) => {
     const nextId = findIncident(id).id;
     setIncidentListOpen(false);
+    setIncidentDetailsOpen(false);
     if (nextId === selectedIdRef.current) return;
     selectionHistory.current.push(selectedIdRef.current);
     setSelectedId(nextId);
@@ -81,6 +85,17 @@ export default function Home() {
     return `Showing ${incidents.length} available incidents.`;
   }, [revealActionTarget]);
 
+  const setIncidentDetails = useCallback(
+    (expanded: boolean) => {
+      setIncidentDetailsOpen(expanded);
+      revealActionTarget("incident-details");
+      return expanded
+        ? "Opened the selected incident details and timeline."
+        : "Closed the selected incident details and timeline.";
+    },
+    [revealActionTarget],
+  );
+
   const openIncidentAt = useCallback(
     (position: number) => {
       const next = incidents[position - 1];
@@ -95,6 +110,8 @@ export default function Home() {
     const previousId = selectionHistory.current.pop();
     if (!previousId) return "There is no previous in-app selection.";
     const previous = findIncident(previousId);
+    setIncidentListOpen(false);
+    setIncidentDetailsOpen(false);
     setSelectedId(previous.id);
     revealActionTarget("incident-panel");
     return `Went back to ${previous.title}.`;
@@ -159,6 +176,7 @@ export default function Home() {
       selectedPosition:
         incidents.findIndex((item) => item.id === currentId) + 1,
       incidentListOpen: incidentListOpenRef.current,
+      incidentDetailsOpen: incidentDetailsOpenRef.current,
       followupForm: { ...draftRef.current },
       submittedFollowups: followups,
       focusedControl,
@@ -194,6 +212,7 @@ export default function Home() {
     () => ({
       readContext,
       showIncidentList,
+      setIncidentDetails,
       openIncident,
       openIncidentAt,
       goBack,
@@ -207,6 +226,7 @@ export default function Home() {
       openIncidentAt,
       readContext,
       scrollPage,
+      setIncidentDetails,
       setFollowupField,
       showIncidentList,
       submitApprovedFollowup,
@@ -303,7 +323,15 @@ export default function Home() {
               <span className="ck-status-label">{incident.status}</span>
               <h2 id="incident-title">{incident.title}</h2>
               <p>{incident.summary}</p>
-              <details className="ck-more" key={incident.id}>
+              <details
+                id="incident-details"
+                className="ck-more"
+                key={incident.id}
+                open={incidentDetailsOpen}
+                onToggle={(event) =>
+                  setIncidentDetailsOpen(event.currentTarget.open)
+                }
+              >
                 <summary>Details &amp; timeline</summary>
                 <dl className="ck-detail-facts">
                   <div>

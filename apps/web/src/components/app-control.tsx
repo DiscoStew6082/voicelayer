@@ -34,6 +34,16 @@ export function AppControl({
 
   useFrontendTool(
     {
+      name: "set_incident_details",
+      description: "Visibly open or close the selected incident details and timeline.",
+      parameters: z.object({ expanded: z.boolean() }),
+      handler: async ({ expanded }) => actions.setIncidentDetails(expanded),
+    },
+    [actions.setIncidentDetails],
+  );
+
+  useFrontendTool(
+    {
       name: "select_incident",
       description:
         "Open an existing sample incident in the workspace. Use an ID from availableIncidents.",

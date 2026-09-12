@@ -58,8 +58,9 @@ Open <http://127.0.0.1:3100>.
    session.”
 7. Expand the transcript to show the requests and semantic tool calls.
 
-Also try “show available incidents,” “scroll down,” “select the second one,”
-“go back,” and “cancel” at the confirmation step.
+Also try “show available incidents,” “open the details,” “show the timeline,”
+“scroll down,” “select the second one,” “go back,” and “cancel” at the
+confirmation step.
 
 ## Architecture
 

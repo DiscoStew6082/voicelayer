@@ -36,6 +36,7 @@ export type AppContextSnapshot = {
   };
   selectedPosition: number;
   incidentListOpen: boolean;
+  incidentDetailsOpen: boolean;
   followupForm: FollowupDraft;
   submittedFollowups: DemoFollowup[];
   focusedControl: string | null;
@@ -54,6 +55,7 @@ export type AppContextSnapshot = {
 export type AppActions = {
   readContext: () => AppContextSnapshot;
   showIncidentList: () => string;
+  setIncidentDetails: (expanded: boolean) => string;
   openIncident: (incidentId: string) => string;
   openIncidentAt: (position: number) => string;
   goBack: () => string;
