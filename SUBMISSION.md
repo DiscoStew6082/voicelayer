@@ -93,16 +93,36 @@ application-owned semantic actions, not mouse coordinates.”
 
 “Keep the interface visible. Speak intent. Operate the app.”
 
+## YouTube upload copy
+
+### Title
+
+VoiceLayer — Accessible Voice Control for Existing Web Apps
+
+### Description
+
+VoiceLayer keeps the application visible while an OpenAI RealtimeAgent runs
+over WebRTC as an accessibility-focused voice input layer. CopilotKit supplies
+live page context and frontend-tool integration, and both agents invoke shared,
+application-owned semantic actions instead of simulated mouse coordinates.
+
+The demo shows contextual navigation, form filling, explicit confirmation
+before sending, and a live transcript for feedback and debugging.
+
+Built for Agents, Everywhere Atlanta on September 12, 2026.
+
+Source: https://github.com/DiscoStew6082/voicelayer
+
+Demo: https://youtu.be/BfQfWDRaw8E
+
 ## Social post draft
 
-> We built VoiceLayer at Agents, Everywhere Atlanta: an accessibility-focused
-> voice control layer that keeps the web app visible while an OpenAI Realtime
-> agent operates it through semantic CopilotKit actions. Users can navigate,
-> scroll, fill forms, and submit with explicit confirmation—no simulated mouse
-> coordinates. <https://github.com/DiscoStew6082/voicelayer> [DEMO_VIDEO_URL]
->
-> Built with OpenAI and CopilotKit. [ADD THE EXACT EVENT AND SPONSOR HANDLES
-> REQUIRED BY THE ATLANTA ORGANIZERS]
+> Built VoiceLayer at #AgentsEverywhere Atlanta: accessible voice control that
+> keeps the UI visible while an @OpenAI Realtime agent uses @CopilotKit context
+> and semantic actions to navigate, fill forms, and confirm sends. Repo:
+> <https://github.com/DiscoStew6082/voicelayer> Demo:
+> <https://youtu.be/BfQfWDRaw8E>
+> @AITinkerers
 
 ## Final checklist
 
@@ -112,9 +132,11 @@ application-owned semantic actions, not mouse coordinates.”
 - [x] Sample data and browser-session persistence clearly labeled
 - [x] Run final verification and production build (3 typechecks, 37 tests, build)
 - [x] Create a participant-owned public GitHub repository
-- [ ] Confirm `.env` and secrets are absent from the public repository
-- [ ] Record and upload a video no longer than two minutes
-- [ ] Add repository and video URLs to the social post
-- [ ] Confirm the exact Atlanta event/sponsor social handles with organizers
+- [x] Confirm `.env` and secrets are absent from the public repository
+- [x] Record a video no longer than two minutes (1:36 with audio)
+- [x] Upload the video and add its public URL
+- [x] Add repository and video URLs to the social post
+- [x] Include the event host and used sponsor handles: @AITinkerers, @OpenAI,
+  and @CopilotKit
 - [ ] Publish the social post
 - [ ] Sign in and submit through the Atlanta portal before 4:30 PM EDT
