@@ -1,12 +1,12 @@
 <div align="center">
 
-# Agents, Everywhere Hackathon Starter Kit
+# VoiceLayer
 
 ![Agents, Everywhere hackathon — OpenAI, CopilotKit, OpenRouter, Exa, Auth0, and Ambiguous AI](assets/banner.png)
 
-**Build an agent that belongs where people already work, talk, and live.**
+**Keep the interface visible. Speak intent. Operate the app.**
 
-[Overview](#overview) · [Get started](#get-started) · [Templates](#templates) · [Coding agent](#coding-agent) · [Resources](#resources)
+[Project](#hackathon-project-voicelayer) · [Run the demo](apps/web/) · [Submission package](SUBMISSION.md) · [Hackathon context](#overview)
 
 </div>
 
