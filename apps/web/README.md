@@ -72,8 +72,15 @@ sessions, but they share the application-owned `AppActions` interface:
    CopilotKit frontend tools with `useFrontendTool`.
 3. `VoiceControl` creates a RealtimeAgent over WebRTC and wraps the same actions
    as Realtime tools.
-4. The Realtime SDK approval lifecycle blocks `submit_followup` until the user
-   says “confirm” or presses Approve.
+4. The page-owned `FollowupCommands` boundary binds a review to the selected
+   incident, exact draft, and revision. Button and spoken approval issue a
+   one-use capability; edits, navigation, cancellation, and a new review revoke
+   older approvals. Adapters cannot submit arbitrary draft objects.
+5. The Realtime SDK approval lifecycle pauses `submit_followup` while the user
+   reviews the exact draft. Only short, whole affirmative utterances such as
+   “confirm” or “yes, confirm” count; questions, future intentions, and
+   homophones remain pending. The accessible confirmation buttons are always
+   available.
 
 No agent manipulates DOM coordinates. The semantic application methods are the
 enforcement and reuse boundary.
@@ -83,7 +90,8 @@ enforcement and reuse boundary.
 | Responsibility | File |
 | --- | --- |
 | Visible workspace and application state | `src/app/page.tsx` |
-| Shared semantic action types | `src/lib/app-actions.ts` |
+| Shared semantic action types and schemas | `src/lib/app-actions.ts`, `src/lib/app-action-schemas.ts` |
+| Draft-bound one-use approval and session state | `src/lib/followup-commands.ts` |
 | CopilotKit context and frontend tools | `src/components/app-control.tsx` |
 | Realtime voice session, tools, approval, transcript | `src/components/voice-control.tsx` |
 | Visible confirmation and session submissions | `src/components/demo-followups.tsx` |

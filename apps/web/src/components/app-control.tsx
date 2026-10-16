@@ -1,7 +1,7 @@
 "use client";
 
 import { useFrontendTool, useAgentContext } from "@copilotkit/react-core/v2";
-import { z } from "zod";
+import { appActionSchemas } from "@/lib/app-action-schemas";
 import { findIncident, workspaceContext } from "@/lib/incidents";
 import type { AppActions } from "@/lib/app-actions";
 
@@ -26,7 +26,7 @@ export function AppControl({
       name: "show_incident_list",
       description:
         "Visibly open the incident list so the user can inspect the available choices.",
-      parameters: z.object({}),
+      parameters: appActionSchemas.empty,
       handler: async () => actions.showIncidentList(),
     },
     [actions.showIncidentList],
@@ -36,7 +36,7 @@ export function AppControl({
     {
       name: "set_incident_details",
       description: "Visibly open or close the selected incident details and timeline.",
-      parameters: z.object({ expanded: z.boolean() }),
+      parameters: appActionSchemas.details,
       handler: async ({ expanded }) => actions.setIncidentDetails(expanded),
     },
     [actions.setIncidentDetails],
@@ -47,7 +47,7 @@ export function AppControl({
       name: "select_incident",
       description:
         "Open an existing sample incident in the workspace. Use an ID from availableIncidents.",
-      parameters: z.object({ incidentId: z.string() }),
+      parameters: appActionSchemas.incident,
       handler: async ({ incidentId }) => {
         const incident = findIncident(incidentId);
         return actions.openIncident(incident.id);
@@ -61,7 +61,7 @@ export function AppControl({
       name: "select_visible_item",
       description:
         "Select an incident by its one-based position in visibleApplication.availableIncidents.",
-      parameters: z.object({ position: z.number().int().min(1) }),
+      parameters: appActionSchemas.position,
       handler: async ({ position }) => actions.openIncidentAt(position),
     },
     [actions.openIncidentAt],
@@ -71,7 +71,7 @@ export function AppControl({
     {
       name: "scroll_page",
       description: "Scroll the visible application up or down by one viewport step.",
-      parameters: z.object({ direction: z.enum(["up", "down"]) }),
+      parameters: appActionSchemas.scroll,
       handler: async ({ direction }) => actions.scrollPage(direction),
     },
     [actions.scrollPage],
@@ -81,7 +81,7 @@ export function AppControl({
     {
       name: "go_back",
       description: "Return to the previously selected incident in this application.",
-      parameters: z.object({}),
+      parameters: appActionSchemas.empty,
       handler: async () => actions.goBack(),
     },
     [actions.goBack],
@@ -91,10 +91,7 @@ export function AppControl({
     {
       name: "set_followup_field",
       description: "Fill a visible follow-up form field with the user's text.",
-      parameters: z.object({
-        field: z.enum(["title", "details"]),
-        value: z.string().max(4000),
-      }),
+      parameters: appActionSchemas.field,
       handler: async ({ field, value }) =>
         actions.setFollowupField(field, value),
     },

@@ -8,8 +8,9 @@ import {
   type RealtimeItem,
 } from "@openai/agents/realtime";
 import { ACCESSIBILITY_VOICE_PROMPT } from "agent-core/shared";
-import { z } from "zod";
-import type { AppActions, FollowupDraft } from "@/lib/app-actions";
+import { appActionSchemas } from "@/lib/app-action-schemas";
+import type { AppActions } from "@/lib/app-actions";
+import type { FollowupApproval, FollowupApprovalToken } from "@/lib/followup-commands";
 import { REALTIME_MODEL } from "@/lib/realtime-config";
 import { confirmationDecision } from "@/lib/voice-confirmation";
 
@@ -32,7 +33,7 @@ type ApprovalItem = Parameters<RealtimeSession["approve"]>[0];
 
 type PendingApproval = {
   item: ApprovalItem;
-  draft: FollowupDraft;
+  approval: FollowupApproval;
   baselineUserItemId: string | null;
 };
 
@@ -62,7 +63,7 @@ function latestCompletedUserMessage(history: RealtimeItem[]) {
     );
 }
 
-export function VoiceControl({ actions }: { actions: AppActions }) {
+export function VoiceControl({ actions, approval }: { actions: AppActions; approval: FollowupApproval | null }) {
   const [status, setStatus] = useState<VoiceStatus>("idle");
   const [error, setError] = useState("");
   const [transcript, setTranscript] = useState<TranscriptEntry[]>([]);
@@ -72,6 +73,7 @@ export function VoiceControl({ actions }: { actions: AppActions }) {
   const actionsRef = useRef(actions);
   const sessionRef = useRef<RealtimeSession | null>(null);
   const pendingApprovalRef = useRef<PendingApproval | null>(null);
+  const approvedRef = useRef<{ token: FollowupApprovalToken; approval: FollowupApproval } | null>(null);
   const audioPlayingRef = useRef(false);
   const transcriptLogRef = useRef<HTMLDivElement | null>(null);
   actionsRef.current = actions;
@@ -94,8 +96,11 @@ export function VoiceControl({ actions }: { actions: AppActions }) {
         // competing response before resuming the SDK's pending tool call.
         session.interrupt();
         if (decision === "approve") {
+          const token = actionsRef.current.approveFollowup(pending.approval.id);
+          approvedRef.current = { token, approval: pending.approval };
           await session.approve(pending.item);
         } else {
+          actionsRef.current.rejectFollowup(pending.approval.id);
           await session.reject(pending.item, {
             message: "The user cancelled the submission. Confirm that nothing was submitted.",
           });
@@ -103,10 +108,19 @@ export function VoiceControl({ actions }: { actions: AppActions }) {
       } catch (cause) {
         setError(cause instanceof Error ? cause.message : String(cause));
         setStatus("error");
+      } finally {
+        approvedRef.current = null;
       }
     },
     [],
   );
+
+  useEffect(() => {
+    const pending = pendingApprovalRef.current;
+    if (pending && pending.approval.id !== approval?.id) {
+      void settleApproval("reject");
+    }
+  }, [approval, settleApproval]);
 
   const connect = useCallback(async () => {
     setStatus("connecting");
@@ -117,7 +131,7 @@ export function VoiceControl({ actions }: { actions: AppActions }) {
       name: "read_app_context",
       description:
         "Read the live semantic state of the visible application. Call before resolving contextual words, positions, newest items, focus, form values, or scroll state.",
-      parameters: z.object({}),
+      parameters: appActionSchemas.empty,
       execute: async () => JSON.stringify(actionsRef.current.readContext()),
     });
 
@@ -125,7 +139,7 @@ export function VoiceControl({ actions }: { actions: AppActions }) {
       name: "ignore_non_command",
       description:
         "Use only when the audio is background speech, a conversational fragment, or not a clear request to operate this application. This tool never changes the UI.",
-      parameters: z.object({}),
+      parameters: appActionSchemas.empty,
       execute: async () => "No application command was detected; nothing changed.",
     });
 
@@ -133,7 +147,7 @@ export function VoiceControl({ actions }: { actions: AppActions }) {
       name: "open_incident",
       description:
         "Open an incident by ID after choosing it from read_app_context. This changes the visible selection.",
-      parameters: z.object({ incidentId: z.string() }),
+      parameters: appActionSchemas.incident,
       execute: async ({ incidentId }) =>
         actionsRef.current.openIncident(incidentId),
     });
@@ -142,7 +156,7 @@ export function VoiceControl({ actions }: { actions: AppActions }) {
       name: "show_incident_list",
       description:
         "Visibly open the application's incident list so the user can inspect every available incident. Use for commands like 'show available incidents', 'open the incident menu', or 'what incidents can I choose from?'.",
-      parameters: z.object({}),
+      parameters: appActionSchemas.empty,
       execute: async () => actionsRef.current.showIncidentList(),
     });
 
@@ -150,7 +164,7 @@ export function VoiceControl({ actions }: { actions: AppActions }) {
       name: "set_incident_details",
       description:
         "Visibly open or close the selected incident's details and timeline. Use expanded true for 'open/show details' or 'show the timeline', and false for 'close/hide details'.",
-      parameters: z.object({ expanded: z.boolean() }),
+      parameters: appActionSchemas.details,
       execute: async ({ expanded }) =>
         actionsRef.current.setIncidentDetails(expanded),
     });
@@ -159,7 +173,7 @@ export function VoiceControl({ actions }: { actions: AppActions }) {
       name: "select_visible_item",
       description:
         "Immediately select a currently visible incident by one-based position. Use this directly for commands like 'open the second incident' or 'select the second one'; position 2 means the second item. The frontend resolves the live ordered list, so a prior context call is unnecessary.",
-      parameters: z.object({ position: z.number().int().min(1) }),
+      parameters: appActionSchemas.position,
       execute: async ({ position }) =>
         actionsRef.current.openIncidentAt(position),
     });
@@ -168,7 +182,7 @@ export function VoiceControl({ actions }: { actions: AppActions }) {
       name: "scroll_page",
       description:
         "Scroll the visible application by one comfortable viewport step. This is a semantic page action, not coordinate control.",
-      parameters: z.object({ direction: z.enum(["up", "down"]) }),
+      parameters: appActionSchemas.scroll,
       execute: async ({ direction }) =>
         actionsRef.current.scrollPage(direction),
     });
@@ -177,10 +191,7 @@ export function VoiceControl({ actions }: { actions: AppActions }) {
       name: "set_followup_field",
       description:
         "Put text into a visible follow-up form field. Use the live context to resolve which field 'that' refers to.",
-      parameters: z.object({
-        field: z.enum(["title", "details"]),
-        value: z.string().max(4000),
-      }),
+      parameters: appActionSchemas.field,
       execute: async ({ field, value }) =>
         actionsRef.current.setFollowupField(field, value),
     });
@@ -189,7 +200,7 @@ export function VoiceControl({ actions }: { actions: AppActions }) {
       name: "go_back",
       description:
         "Return to the previously selected item inside this application. Does not control browser or operating-system history.",
-      parameters: z.object({}),
+      parameters: appActionSchemas.empty,
       execute: async () => actionsRef.current.goBack(),
     });
 
@@ -197,23 +208,18 @@ export function VoiceControl({ actions }: { actions: AppActions }) {
       name: "submit_followup",
       description:
         "Consequential session-only action: submit the currently visible follow-up to the on-screen list. Copy the selected incident and exact visible field values from read_app_context. The application requires explicit approval before execution.",
-      parameters: z.object({
-        incidentId: z.string(),
-        title: z.string().trim().min(1).max(200),
-        details: z.string().trim().min(1).max(4000),
-      }),
+      parameters: appActionSchemas.submission,
       needsApproval: true,
       execute: async (draft) => {
-        const context = actionsRef.current.readContext();
-        const selectedId = String(context.selectedIncident.id ?? "");
-        if (
-          selectedId !== draft.incidentId ||
-          context.followupForm.title !== draft.title ||
-          context.followupForm.details !== draft.details
-        ) {
-          return "The visible selection or draft changed. Read app context again and do not submit stale values.";
+        const approved = approvedRef.current;
+        approvedRef.current = null;
+        if (!approved ||
+          approved.approval.draft.incidentId !== draft.incidentId ||
+          approved.approval.draft.title !== draft.title ||
+          approved.approval.draft.details !== draft.details) {
+          return "No current approval exists for this exact draft. Request a new review.";
         }
-        const submitted = await actionsRef.current.submitApprovedFollowup(draft);
+        const submitted = await actionsRef.current.submitFollowup(approved.token);
         return `Saved ${submitted.title} for this browser session.`;
       },
     });
@@ -310,22 +316,31 @@ export function VoiceControl({ actions }: { actions: AppActions }) {
         request.type !== "function_approval"
       )
         return;
-      let draft: FollowupDraft = actionsRef.current.readContext().followupForm;
+      // A new request supersedes the old SDK request as well as the app review.
+      const previous = pendingApprovalRef.current;
+      if (previous) {
+        pendingApprovalRef.current = null;
+        setPendingApproval(null);
+        actionsRef.current.rejectFollowup(previous.approval.id);
+        void session.reject(previous.item, { message: "Superseded by a new review." })
+          .catch((cause) => setError(String(cause)));
+      }
+      approvedRef.current = null;
+      let currentApproval: FollowupApproval;
       try {
-        const args = JSON.parse(request.approvalItem.arguments ?? "{}") as {
-          title?: string;
-          details?: string;
-        };
-        draft = {
-          title: args.title ?? draft.title,
-          details: args.details ?? draft.details,
-        };
-      } catch {
-        // The visible form remains the source shown to the user for review.
+        const args = appActionSchemas.submission.parse(
+          JSON.parse(request.approvalItem.arguments ?? "{}"),
+        );
+        currentApproval = actionsRef.current.requestFollowupApproval(args);
+      } catch (cause) {
+        void session.reject(request.approvalItem, {
+          message: cause instanceof Error ? cause.message : "The draft cannot be approved.",
+        }).catch((error) => setError(String(error)));
+        return;
       }
       const pending = {
         item: request.approvalItem,
-        draft,
+        approval: currentApproval,
         baselineUserItemId:
           latestCompletedUserMessage(session.history)?.itemId ?? null,
       };
@@ -373,7 +388,9 @@ export function VoiceControl({ actions }: { actions: AppActions }) {
       if (sessionRef.current !== session) return;
       session.close();
       sessionRef.current = null;
+      if (pendingApprovalRef.current) actionsRef.current.rejectFollowup(pendingApprovalRef.current.approval.id);
       pendingApprovalRef.current = null;
+      approvedRef.current = null;
       audioPlayingRef.current = false;
       setPendingApproval(null);
       setError(String(event.error ?? event));
@@ -401,7 +418,9 @@ export function VoiceControl({ actions }: { actions: AppActions }) {
   const disconnect = useCallback(() => {
     sessionRef.current?.close();
     sessionRef.current = null;
+    if (pendingApprovalRef.current) actionsRef.current.rejectFollowup(pendingApprovalRef.current.approval.id);
     pendingApprovalRef.current = null;
+    approvedRef.current = null;
     audioPlayingRef.current = false;
     setPendingApproval(null);
     setStatus("idle");
@@ -435,8 +454,8 @@ export function VoiceControl({ actions }: { actions: AppActions }) {
         {pendingApproval && (
           <section className="ck-voice-approval" aria-label="Confirm submission">
             <strong>Submit this follow-up?</strong>
-            <span>{pendingApproval.draft.title}</span>
-            <p>{pendingApproval.draft.details}</p>
+            <span>{pendingApproval.approval.draft.title}</span>
+            <p>{pendingApproval.approval.draft.details}</p>
             <p>Say “yes, confirm” or “no, cancel”, or use these buttons.</p>
             <div className="ck-approval-actions">
               <button

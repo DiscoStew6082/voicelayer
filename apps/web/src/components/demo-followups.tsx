@@ -2,10 +2,13 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import type {
+  AppActions,
   DemoFollowup,
   FollowupDraft,
   FollowupField,
 } from "@/lib/app-actions";
+
+import type { FollowupApproval } from "@/lib/followup-commands";
 
 export function DemoFollowups({
   incidentId,
@@ -13,33 +16,43 @@ export function DemoFollowups({
   submitted,
   setDraftField,
   onFocusField,
-  onSubmit,
+  approval,
+  actions,
 }: {
   incidentId: string;
   draft: FollowupDraft;
   submitted: DemoFollowup[];
   setDraftField: (field: FollowupField, value: string) => void;
   onFocusField: (field: FollowupField) => void;
-  onSubmit: (draft: FollowupDraft & { incidentId: string }) => Promise<DemoFollowup>;
+  approval: FollowupApproval | null;
+  actions: AppActions;
 }) {
-  const [reviewing, setReviewing] = useState(false);
   const [notice, setNotice] = useState("");
+  const [formReviewId, setFormReviewId] = useState<string | null>(null);
 
   useEffect(() => {
-    setReviewing(false);
     setNotice("");
   }, [incidentId]);
 
   function review(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setReviewing(true);
-    setNotice("");
+    try {
+      setFormReviewId(actions.requestFollowupApproval().id);
+      setNotice("");
+    } catch (cause) {
+      setNotice(cause instanceof Error ? cause.message : String(cause));
+    }
   }
 
   async function approve() {
-    await onSubmit({ incidentId, ...draft });
-    setReviewing(false);
-    setNotice("Saved for this session. Nothing was sent outside the browser.");
+    if (!approval || approval.id !== formReviewId) return;
+    try {
+      const token = actions.approveFollowup(approval.id);
+      await actions.submitFollowup(token);
+      setNotice("Saved for this session. Nothing was sent outside the browser.");
+    } catch (cause) {
+      setNotice(cause instanceof Error ? cause.message : String(cause));
+    }
   }
 
   return (
@@ -107,11 +120,11 @@ export function DemoFollowups({
         </button>
       </form>
 
-      {reviewing && (
+      {approval && approval.id === formReviewId && (
         <section className="ck-approval" aria-label="Confirm demo submission">
           <h3>Submit this follow-up?</h3>
-          <strong>{draft.title}</strong>
-          <p className="ck-preserve-lines">{draft.details}</p>
+          <strong>{approval.draft.title}</strong>
+          <p className="ck-preserve-lines">{approval.draft.details}</p>
           <p>
             This saves only in the current browser session. Nothing will be sent
             to an external service.
@@ -127,7 +140,7 @@ export function DemoFollowups({
             <button
               type="button"
               className="ck-btn"
-              onClick={() => setReviewing(false)}
+              onClick={() => actions.rejectFollowup(approval.id)}
             >
               Cancel
             </button>

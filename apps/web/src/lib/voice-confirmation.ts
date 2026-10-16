@@ -7,7 +7,8 @@ export type ConfirmationDecision = "approve" | "reject" | null;
 export function confirmationDecision(text: string): ConfirmationDecision {
   const normalized = text
     .toLowerCase()
-    .replace(/[^a-z\s']/g, " ")
+    .replace(/[’]/g, "'")
+    .replace(/[.,!]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
 
@@ -21,16 +22,15 @@ export function confirmationDecision(text: string): ConfirmationDecision {
     return "reject";
   }
 
-  if (
-    /\b(confirm|approve)\b/.test(normalized) ||
-    /^(yes\b|go ahead\b|do it\b|proceed\b)/.test(normalized) ||
-    // In the captured noisy-room demo, an explicit "I approve" was
-    // transcribed as the exact homophone "I'll prove." Accept only that short
-    // standalone recognition variant, and only while an approval is pending.
-    /^(i'll|ill) prove$/.test(normalized)
-  ) {
-    return "approve";
-  }
+  // Whole utterances only. Questions, qualifications, future intentions, and
+  // homophones are ambiguous; the accessible buttons remain available.
+  const affirmatives = new Set([
+    "confirm", "confirm the send", "confirm submission", "i confirm",
+    "approve", "i approve", "approve this submission", "please approve this submission",
+    "yes", "yes confirm", "yes submit it", "go ahead", "go ahead please",
+    "do it", "proceed",
+  ]);
+  if (affirmatives.has(normalized)) return "approve";
 
   return null;
 }

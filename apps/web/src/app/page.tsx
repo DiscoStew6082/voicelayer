@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import {
   CopilotChat,
   useConfigureSuggestions,
@@ -12,32 +12,23 @@ import { DemoFollowups } from "@/components/demo-followups";
 import { VoiceControl } from "@/components/voice-control";
 import type {
   AppActions,
-  DemoFollowup,
-  FollowupDraft,
   FollowupField,
 } from "@/lib/app-actions";
 
+import { FollowupCommands, type FollowupApprovalToken, type FollowupSubmission } from "@/lib/followup-commands";
+
 export default function Home() {
-  const [selectedId, setSelectedId] = useState<string>(incidents[0].id);
-  const [draft, setDraft] = useState<FollowupDraft>({
-    title: "",
-    details: "",
-  });
+  const [commands] = useState(() => new FollowupCommands(incidents[0].id));
+  const { selectedId, draft, submitted: submittedFollowups, pendingApproval } =
+    useSyncExternalStore(commands.subscribe, commands.getSnapshot, commands.getSnapshot);
   const [incidentListOpen, setIncidentListOpen] = useState(false);
   const [incidentDetailsOpen, setIncidentDetailsOpen] = useState(false);
-  const [submittedFollowups, setSubmittedFollowups] = useState<DemoFollowup[]>([]);
   const selectionHistory = useRef<string[]>([]);
   const lastFocusedControl = useRef<string | null>(null);
-  const selectedIdRef = useRef(selectedId);
-  const draftRef = useRef(draft);
   const incidentListOpenRef = useRef(incidentListOpen);
   const incidentDetailsOpenRef = useRef(incidentDetailsOpen);
-  const submittedFollowupsRef = useRef(submittedFollowups);
-  selectedIdRef.current = selectedId;
-  draftRef.current = draft;
   incidentListOpenRef.current = incidentListOpen;
   incidentDetailsOpenRef.current = incidentDetailsOpen;
-  submittedFollowupsRef.current = submittedFollowups;
   const incidentFollowups = submittedFollowups.filter(
     (item) => item.incidentId === selectedId,
   );
@@ -46,10 +37,10 @@ export default function Home() {
     const nextId = findIncident(id).id;
     setIncidentListOpen(false);
     setIncidentDetailsOpen(false);
-    if (nextId === selectedIdRef.current) return;
-    selectionHistory.current.push(selectedIdRef.current);
-    setSelectedId(nextId);
-  }, []);
+    if (nextId === commands.getSnapshot().selectedId) return;
+    selectionHistory.current.push(commands.getSnapshot().selectedId);
+    commands.selectIncident(nextId);
+  }, [commands]);
 
   const revealActionTarget = useCallback((targetId: string) => {
     if (typeof window === "undefined") return;
@@ -112,10 +103,10 @@ export default function Home() {
     const previous = findIncident(previousId);
     setIncidentListOpen(false);
     setIncidentDetailsOpen(false);
-    setSelectedId(previous.id);
+    commands.selectIncident(previous.id);
     revealActionTarget("incident-panel");
     return `Went back to ${previous.title}.`;
-  }, [revealActionTarget]);
+  }, [commands, revealActionTarget]);
 
   const scrollPage = useCallback((direction: "up" | "down") => {
     if (typeof window === "undefined") return "The page is not available.";
@@ -128,17 +119,17 @@ export default function Home() {
 
   const setFollowupField = useCallback(
     (field: FollowupField, value: string) => {
-      setDraft((current) => ({ ...current, [field]: value }));
+      commands.setField(field, value);
       revealActionTarget("followup-editor");
       return `Updated the follow-up ${field} field.`;
     },
-    [revealActionTarget],
+    [commands, revealActionTarget],
   );
 
   const readContext = useCallback(() => {
-    const currentId = selectedIdRef.current;
+    const currentId = commands.getSnapshot().selectedId;
     const currentIncident = findIncident(currentId);
-    const followups = submittedFollowupsRef.current.filter(
+    const followups = commands.getSnapshot().submitted.filter(
       (item) => item.incidentId === currentId,
     );
     let focusedControl: string | null = null;
@@ -177,7 +168,7 @@ export default function Home() {
         incidents.findIndex((item) => item.id === currentId) + 1,
       incidentListOpen: incidentListOpenRef.current,
       incidentDetailsOpen: incidentDetailsOpenRef.current,
-      followupForm: { ...draftRef.current },
+      followupForm: { ...commands.getSnapshot().draft },
       submittedFollowups: followups,
       focusedControl,
       viewport: {
@@ -185,28 +176,20 @@ export default function Home() {
         canScrollUp: scrollY > 0,
         canScrollDown,
       },
-      pendingAction: null,
+      pendingAction: commands.getSnapshot().pendingApproval ? "submit_followup" as const : null,
     };
-  }, []);
+  }, [commands]);
 
-  const submitApprovedFollowup = useCallback(
-    async (submission: {
-      incidentId: string;
-      title: string;
-      details: string;
-    }) => {
-      const followup: DemoFollowup = {
-        id: `demo-${Date.now()}`,
-        ...submission,
-        submittedAt: new Date().toISOString(),
-      };
-      setSubmittedFollowups((current) => [...current, followup]);
-      setDraft({ title: "", details: "" });
-      revealActionTarget("followup-editor");
-      return followup;
-    },
-    [revealActionTarget],
+  const requestFollowupApproval = useCallback(
+    (expected?: FollowupSubmission) => commands.requestApproval(expected), [commands],
   );
+  const approveFollowup = useCallback((id: string) => commands.approve(id), [commands]);
+  const rejectFollowup = useCallback((id: string) => commands.reject(id), [commands]);
+  const submitFollowup = useCallback(async (token: FollowupApprovalToken) => {
+    const followup = commands.submit(token);
+    revealActionTarget("followup-editor");
+    return followup;
+  }, [commands, revealActionTarget]);
 
   const actions = useMemo<AppActions>(
     () => ({
@@ -218,7 +201,10 @@ export default function Home() {
       goBack,
       scrollPage,
       setFollowupField,
-      submitApprovedFollowup,
+      requestFollowupApproval,
+      approveFollowup,
+      rejectFollowup,
+      submitFollowup,
     }),
     [
       goBack,
@@ -229,7 +215,10 @@ export default function Home() {
       setIncidentDetails,
       setFollowupField,
       showIncidentList,
-      submitApprovedFollowup,
+      requestFollowupApproval,
+      approveFollowup,
+      rejectFollowup,
+      submitFollowup,
     ],
   );
 
@@ -366,15 +355,16 @@ export default function Home() {
 
             <DemoFollowups
               incidentId={selectedId}
+              approval={pendingApproval}
+              actions={actions}
               draft={draft}
               submitted={incidentFollowups}
               setDraftField={(field, value) => {
-                setDraft((current) => ({ ...current, [field]: value }));
+                commands.setField(field, value);
               }}
               onFocusField={(field) => {
                 lastFocusedControl.current = `follow-up ${field}`;
               }}
-              onSubmit={submitApprovedFollowup}
             />
           </section>
 
@@ -398,7 +388,7 @@ export default function Home() {
           </section>
         </div>
       </main>
-      <VoiceControl actions={actions} />
+      <VoiceControl actions={actions} approval={pendingApproval} />
     </>
   );
 }

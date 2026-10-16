@@ -1,3 +1,5 @@
+import type { FollowupApproval, FollowupApprovalToken, FollowupSubmission } from "./followup-commands";
+
 export type FollowupDraft = {
   title: string;
   details: string;
@@ -61,9 +63,8 @@ export type AppActions = {
   goBack: () => string;
   scrollPage: (direction: "up" | "down") => string;
   setFollowupField: (field: FollowupField, value: string) => string;
-  submitApprovedFollowup: (draft: {
-    incidentId: string;
-    title: string;
-    details: string;
-  }) => Promise<DemoFollowup>;
+  requestFollowupApproval: (draft?: FollowupSubmission) => FollowupApproval;
+  approveFollowup: (approvalId: string) => FollowupApprovalToken;
+  rejectFollowup: (approvalId: string) => void;
+  submitFollowup: (token: FollowupApprovalToken) => Promise<DemoFollowup>;
 };
