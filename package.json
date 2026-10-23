@@ -6,7 +6,7 @@
   "description": "Starter kit for the Agents, Everywhere: Bots, Channels & More global hackathon.",
   "license": "MIT",
   "engines": {
-    "node": ">=22"
+    "node": "^22.23.4 || ^24.22.1 || >=26.12.1"
   },
   "workspaces": [
     "packages/*",
