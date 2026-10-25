@@ -13,7 +13,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@copilotkit/react-native": "1.70.1",
+    "@copilotkit/react-native": "1.79.1",
     "@types/react": "~19.1.0",
     "expo": "~54.0.0",
     "expo-status-bar": "~3.0.0",
@@ -22,7 +22,16 @@
     "react-native-get-random-values": "~1.11.0",
     "react-native-markdown-renderer": "4.1.1",
     "react-native-safe-area-context": "~5.6.0",
-    "zod": "^4.1.0"
+    "zod": "^4.6.6"
+  },
+  "overrides": {
+    "image-size": "2.0.3",
+    "katex": "0.18.2",
+    "postcss": "8.5.23",
+    "xcode": {
+      "uuid": "11.1.1"
+    },
+    "zod": "$zod"
   },
   "devDependencies": {
     "@types/react": "~19.1.0",

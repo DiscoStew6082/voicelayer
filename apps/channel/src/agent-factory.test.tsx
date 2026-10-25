@@ -115,7 +115,7 @@ function appendToolResult(agent: { addMessage: BuiltInAgent["addMessage"] }) {
 }
 
 describe("ChannelRunAgent", () => {
-  it("documents the classic BuiltInAgent same-tick continuation guard and avoids it for channel runs", async () => {
+  it("continues same-tick tool results with the maintained SDK and channel facade", async () => {
     const plainModel = delayedToolThenAnswerModel();
     const plain = builtInAgent(plainModel, "thread_plain");
 
@@ -123,10 +123,11 @@ describe("ChannelRunAgent", () => {
       await plain.runAgent({ tools: [demoTool], context: [] });
       appendToolResult(plain);
 
-      await assert.rejects(
-        () => plain.runAgent({ tools: [], context: [] }),
-        /Agent is already running\. Call abortRun\(\) first or create a new instance\./,
+      await assert.doesNotReject(() =>
+        plain.runAgent({ tools: [], context: [] }),
       );
+      assert.match(JSON.stringify(plainModel.prompts.at(-1)), /tool-result/);
+      assert.match(JSON.stringify(plain.messages), /The tool result was handled/);
     } finally {
       plainModel.closeOpenStreams();
     }
