@@ -127,7 +127,6 @@ The app READMEs provide launch commands, files to customize, and a concrete resu
 | CopilotKit app development | [Docs](https://docs.copilotkit.ai/) · [Discord channel for technical questions](https://discord.com/channels/1122926057641742418/1548038338848489532) |
 | CopilotKit Channels | [Channels guide](https://copilotkit.ai/channels-guide.md) · [OpenTag example app](https://github.com/CopilotKit/OpenTag) |
 | Exa quickstart | [Search API guide](https://exa.ai/docs/reference/search-api-guide) · [Kit setup](using-sponsor-tools.md#exa) |
-| Auth0 API authorization | [Node API](https://auth0.com/docs/quickstart/backend/nodejs) · [Kit setup](using-sponsor-tools.md#auth0) |
 | Ambiguous AI quickstart | [Developer guide](https://www.ambiguous.ai/llms.txt) · [Kit setup](using-sponsor-tools.md#ambiguous-ai) |
 | Rehearse and debug | [Demo prompts](dev-docs/demo-prompts.md) · [Troubleshooting](dev-docs/troubleshooting.md) |
 | Prepare your entry | [Submission checklist](SUBMISSION.md) |
