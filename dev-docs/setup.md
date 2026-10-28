@@ -31,40 +31,11 @@ Select an available model in your provider account. Restart after changing confi
 npm run dev:web
 ```
 
-`npm run dev` is an alias for the web template. Open `http://127.0.0.1:3100` or `http://localhost:3100`. The web follow-up approval server is loopback-only by default because it can use local Ambiguous credentials. For the React Native template, the same command starts the mobile runtime endpoint; simulators can use the documented localhost/emulator URLs, while physical devices need a deliberate reachable host or deployment.
-
-## Add Slack
-
-Intelligence manages platform credentials and delivers over an outbound socket. Your listener stays running; no public tunnel is needed.
-
-```bash
-npm run channel:setup -- --no-clipboard
-```
-
-This installs the current `channels-setup` skill and prints the official prompt. Continue with that prompt in your coding agent, selecting **Slack** and the existing `apps/channel` app. Let the agent follow the skill through setup and verify a real Slack reply. The command itself does not authenticate or provision the Channel. See [CopilotKit onboarding](../README.md#copilotkit-onboarding) for this handoff and the web/mobile Intelligence path.
-
-For manual setup, create the Channel **before** the Slack app so the wizard can generate the correct manifest:
-
-```bash
-npx copilotkit@latest channels add --name my-agent \
-  --display-name "My Agent" --adapter slack --json
-```
-
-1. Complete the platform setup and installation.
-2. Copy the Channel **Code** into `CHANNEL_CODE` in root `.env`.
-3. Create a project-scoped Intelligence API key and set `INTELLIGENCE_API_KEY`.
-4. Run `npm run dev:slack` to start the Channel listener.
-5. In Slack, `/invite @yourbot`, then mention it inside a thread.
-
-```bash
-npm run channel:status
-```
-
-Use a separate Intelligence project for local and deployed listeners. Two listeners sharing a Channel can compete for deliveries. See [troubleshooting](troubleshooting.md).
+`npm run dev` is an alias for the web app. Open `http://127.0.0.1:3100` or `http://localhost:3100`. The web follow-up approval server is loopback-only by default because it can use local Ambiguous credentials.
 
 ## Add one useful capability
 
-Choose the tools your [template](../README.md#templates) needs, then follow [using-sponsor-tools.md](../using-sponsor-tools.md) for authentication, configuration, and a first call. Each integration has its own prerequisites.
+Choose the tools your app needs, then follow [using-sponsor-tools.md](../using-sponsor-tools.md) for authentication, configuration, and a first call. Each integration has its own prerequisites.
 
 ## Verify offline, then prove the live path
 

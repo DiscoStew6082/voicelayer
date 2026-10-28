@@ -34,9 +34,7 @@ The [submission checklist](SUBMISSION.md#evidence-for-the-judging-criteria) tran
 
 ## Choose infrastructure, then make the project yours
 
-- [Slack](apps/channel/README.md): OpenAI + CopilotKit Channels + Exa for thread context, research, and native cards.
-- [Web](apps/web/README.md): OpenAI + CopilotKit React + Ambiguous AI for page context and persistent workplace records.
-- [React Native](apps/mobile/README.md): OpenAI or OpenRouter + CopilotKit React Native for phone app context, native cards, and approval-gated local actions.
+- [Web](apps/web/README.md): OpenAI + CopilotKit React + Ambiguous AI for page context and persistent workplace records. This is the app this checkout retains; the kit's Slack and React Native templates were removed as unused.
 
 The incident app is a reference for wiring infrastructure. Change the user, problem, data, and interaction. Do not treat the sample scenario as the assigned challenge. Any technical stack is allowed by the handbook.
 
