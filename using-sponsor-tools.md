@@ -1,23 +1,22 @@
 # Using sponsor tools
 
-One setup reference for the six sponsors featured in this kit. Choose the tools your workflow needs. **OpenAI** is the marquee sponsor; **CopilotKit and OpenRouter** share the next tier; **Exa, Auth0, and Ambiguous AI** provide additional capabilities. This is the kit's selected lineup; the [global event page](https://aitinkerers.org/hackathons/global/agents-everywhere) maintains the full event roster and links to each city's event.
+One setup reference for the sponsors this project uses. **OpenAI** is the primary provider; **CopilotKit and OpenRouter** provide the agent runtime and alternate model gateway; **Exa and Ambiguous AI** provide additional capabilities. This started from the Agents, Everywhere hackathon kit; the [global event page](https://aitinkerers.org/hackathons/global/agents-everywhere) maintains the full event roster.
 
-Use Node.js 22+. For Slack/web/mobile, run the homepage's clone/install steps and keep credentials in root `.env`. Never put keys in frontend code or a submission. `npm run verify` covers offline behavior, not live account access.
+Use Node.js 22+. Run the homepage's clone/install steps and keep credentials in root `.env`. Never put keys in frontend code or a submission. `npm run verify` covers offline behavior, not live account access.
 
 | Sponsor | Used by | First result |
 |---|---|---|
-| [OpenAI](#openai) | Slack, web, mobile | A model response to supplied context |
-| [CopilotKit](#copilotkit) | Slack, web, mobile | A contextual answer and native UI |
-| [OpenRouter](#openrouter) | Optional Slack/web/mobile model gateway | A response from your chosen catalog model |
-| [Exa](#exa) | Slack template | Research with inspectable sources |
-| [Auth0](#auth0) | Optional protected-API recipe | Verified service identity and scope before a protected action |
-| [Ambiguous AI](#ambiguous-ai) | Web template; optional Slack integration | A real workplace record that survives refresh |
+| [OpenAI](#openai) | Web app, voice route | A model response to supplied context |
+| [CopilotKit](#copilotkit) | Web app | A contextual answer and rendered UI |
+| [OpenRouter](#openrouter) | Optional model gateway | A response from your chosen catalog model |
+| [Exa](#exa) | Voice search route | Research with inspectable sources |
+| [Ambiguous AI](#ambiguous-ai) | Web app | A real workplace record that survives refresh |
 
 ## OpenAI
 
-**Access and authentication.** Create a server-side [API key](https://platform.openai.com/api-keys) in the OpenAI organization/project you will use for the hackathon.
+**Access and authentication.** Create a server-side [API key](https://platform.openai.com/api-keys) in the OpenAI organization/project you will use.
 
-**Configure Slack/web/mobile** in root `.env`:
+**Configure** in root `.env`:
 
 ```dotenv
 MODEL_PROVIDER=openai
@@ -52,39 +51,19 @@ console.log(answer);
 JS
 ```
 
-**Check:** the response accounts for the failed rollback; confirm usage in the correct API project. Then run `npm run dev:slack`, `npm run dev:web`, or the React Native template runtime plus Expo app. These use the [shared model adapter](packages/agent-core/src/model.ts). [Agents SDK quickstart](https://openai.github.io/openai-agents-js/guides/quickstart/)
+**Check:** the response accounts for the failed rollback; confirm usage in the correct API project. Then run `npm run dev:web`. These use the [shared model adapter](packages/agent-core/src/model.ts). [Agents SDK quickstart](https://openai.github.io/openai-agents-js/guides/quickstart/)
 
 ## CopilotKit
 
-**Access and authentication.** The React web and React Native templates need only your model-provider account for CopilotKit's existing integration. To connect either app to Intelligence, use the [official onboarding prompt](README.md#copilotkit-onboarding). The Slack template additionally uses [CopilotKit Intelligence](https://intelligence.copilotkit.ai/) to manage the Channel and Slack installation. Run `npm run channel:setup -- --no-clipboard`, then give the emitted prompt to your coding agent and select Slack with the existing `apps/channel` app. This installs the maintained setup skill; the agent follows it to configure the Channel. Use [setup](dev-docs/setup.md) or the [illustrated walkthrough](dev-docs/channels-sdk-walkthrough/README.md) as manual references.
+**Access and authentication.** The web app needs only your model-provider account for CopilotKit's existing integration. To connect it to Intelligence, use the [official onboarding prompt](README.md#copilotkit-onboarding).
 
-**Configure Slack** in root `.env`, alongside the model settings:
+**First call, React web:** run `npm run dev:web`, open `http://localhost:3100`, select an incident, then ask: "What is happening with the selected incident? Show a card." **Check:** the answer matches the current page without pasting its contents. [AppControl](apps/web/src/components/app-control.tsx) registers page context and frontend tools; [GenerativeUI](apps/web/src/components/generative-ui.tsx) registers React components. With Ambiguous configured, ask for a follow-up proposal, approve it in the page, then refresh and read back the same provider record.
 
-```dotenv
-CHANNEL_CODE=your-channel-code
-INTELLIGENCE_API_KEY=your-project-scoped-key
-LOG_LEVEL=debug
-```
-
-The Channel Code must match Intelligence exactly. Use a project-scoped API key from that project's API Keys page. Managed Channels require no `xapp-` token or public tunnel.
-
-**First call, Slack:**
-
-```bash
-npm run dev:slack
-```
-
-Invite the bot and add a few facts to a thread before asking: “Read this thread and show an incident card.” **Check:** `read_thread` uses earlier messages and `incident_card` renders in Slack. Customize [the Channel](apps/channel/src/channel.tsx), [tools](apps/channel/src/tools.tsx), and [components](apps/channel/src/components.tsx).
-
-**First call, React web:** run `npm run dev:web`, open `http://localhost:3100`, select an incident, then ask: “What is happening with the selected incident? Show a card.” **Check:** the answer matches the current page without pasting its contents. [AppControl](apps/web/src/components/app-control.tsx) registers page context and frontend tools; [GenerativeUI](apps/web/src/components/generative-ui.tsx) registers React components. With Ambiguous configured, ask for a follow-up proposal, approve it in the page, then refresh and read back the same provider record.
-
-**First call, React Native:** run `npm run dev:web`, then `npm ci --prefix apps/mobile` and `npm start --prefix apps/mobile`. Ask “Show my balances.” **Check:** the app uses its local finance state and renders the native account card. The sample expense write waits for an approval tap and changes in-memory data only.
-
-Keep the tested Channels/runtime versions and the `@ag-ui/client` override. Before editing the Slack template, read the [Channels skill](.agents/skills/build-channels-agent/SKILL.md). [CopilotKit docs](https://docs.copilotkit.ai/) · [Channels guide](https://copilotkit.ai/channels-guide.md)
+Keep the `@ag-ui/client` override. [CopilotKit docs](https://docs.copilotkit.ai/)
 
 ## OpenRouter
 
-**Access and authentication.** Create an [API key](https://openrouter.ai/keys) and choose a model from the [catalog](https://openrouter.ai/models). Use a model that supports tools for Slack, web, and React Native workflows.
+**Access and authentication.** Create an [API key](https://openrouter.ai/keys) and choose a model from the [catalog](https://openrouter.ai/models). Use a model that supports tools for the web app.
 
 **Configure** root `.env`:
 
@@ -145,35 +124,7 @@ console.log(result.results.map(({ title, url, highlights }) => ({ title, url, hi
 JS
 ```
 
-**Check:** open the returned URLs and compare their evidence with the answer. In Slack ask the agent to research the question in the thread and include sources. The [search capability](packages/agent-core/src/capabilities/search.ts) is registered by the Slack template when the key exists. It also appears in the voice search route; ordinary web chat does not register Exa. [Search API quickstart](https://exa.ai/docs/reference/search-api-guide)
-
-## Auth0
-
-### Standalone protected API call
-
-Use this optional docs companion recipe to learn Auth0 machine-to-machine API authorization. The server verifies the service identity and required scope before creating a local record. Use it as an authorization reference alongside the starter app you choose from `apps/`.
-
-**Access and configure:** in Auth0, create an RS256 API with identifier `https://agents-everywhere.example/api`, add permission `create:followups`, and grant it to a Machine to Machine application. The identifier is an audience string and does not need a hosted URL. Add these values to root `.env`:
-
-```dotenv
-AUTH0_DOMAIN=your-tenant.us.auth0.com
-AUTH0_AUDIENCE=https://agents-everywhere.example/api
-AUTH0_CLIENT_ID=your-m2m-client-id
-AUTH0_CLIENT_SECRET=your-m2m-client-secret
-```
-
-**First working call:**
-
-```bash
-npm ci --prefix dev-docs/auth0
-npm test --prefix dev-docs/auth0
-# Terminal 1, from root:
-node --env-file=.env dev-docs/auth0/server.mjs
-# Terminal 2, from root:
-node --env-file=.env dev-docs/auth0/client.mjs
-```
-
-**Check:** the client first gets `401` without authorization, then `201` and a local record with an Auth0 service identity. Tokens are not printed. Records last until the server stops. A `403` indicates missing scope; check the API grant. Customize [client.mjs](dev-docs/auth0/client.mjs) and [server.mjs](dev-docs/auth0/server.mjs). The server validates signature, issuer, audience, expiry, and scope before the write. [Node API quickstart](https://auth0.com/docs/quickstart/backend/nodejs) · [Client credentials flow](https://auth0.com/docs/get-started/authentication-and-authorization-flow/client-credentials-flow/call-your-api-using-the-client-credentials-flow)
+**Check:** open the returned URLs and compare their evidence with the answer. The [search capability](packages/agent-core/src/capabilities/search.ts) appears in the voice search route; ordinary web chat does not register Exa. [Search API quickstart](https://exa.ai/docs/reference/search-api-guide)
 
 ## Ambiguous AI
 
@@ -199,6 +150,6 @@ JS
 
 **Check:** the returned identity belongs to the intended demo workspace. Then run `npm run dev:web` and follow [the web template's create/read-back sequence](apps/web/README.md#try-the-flow). Ask for the exact proposed task, approve it with the page button, and retrieve the same ID after refreshing. Open the actual returned record link. The web chat proposes and reads through frontend tools; it does not receive raw Ambiguous write tools.
 
-The [shared MCP connection](packages/agent-core/src/capabilities/workplace.ts) is also available to Slack when configured. Tool schemas come from the live workspace; never invent names, arguments, or record URLs. Approval prompts and cards guide behavior but do not enforce a gate around every MCP tool. For your own app, enforce required authorization at the write boundary. A `401` needs valid credentials; a `403` needs appropriate permissions. A new workspace does not fix access to the intended one.
+The [shared MCP connection](packages/agent-core/src/capabilities/workplace.ts) can also serve other surfaces when configured. Tool schemas come from the live workspace; never invent names, arguments, or record URLs. Approval prompts and cards guide behavior but do not enforce a gate around every MCP tool. For your own app, enforce required authorization at the write boundary. A `401` needs valid credentials; a `403` needs appropriate permissions. A new workspace does not fix access to the intended one.
 
 [Developer guide](https://www.ambiguous.ai/llms.txt) · [API schemas](https://app.ambiguous.ai/api/openapi.json) · [Task-only disposable sandbox](https://www.ambiguous.ai/sandbox.md) (separate credentials, no MCP)
